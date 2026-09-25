@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Novo hook importado para ler a URL atual
+import { usePathname } from "next/navigation";
+import { whatsappUrl } from "@/lib/format";
 
 const Icons = {
   ajuda: (
@@ -22,47 +23,47 @@ const Icons = {
   )
 };
 
-const NavLink = ({ text, icon, href }: { text: string; icon: React.ReactNode; href: string }) => {
-  const isExternal = href.startsWith("http");
-  return (
-    <li>
-      <Link 
-        href={href} 
-        target={isExternal ? "_blank" : "_self"}
-        className="relative flex items-center gap-1.5 cursor-pointer group font-medium text-sm px-1"
-      >
-        <span className="text-brand-muted group-hover:text-brand-light transition-colors duration-300">
-          {icon}
-        </span>
-        <div className="relative overflow-hidden h-5 leading-5">
-          <div className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] group-hover:-translate-y-1/2">
-            <span className="block text-brand-light">{text}</span>
-            <span className="block text-brand-light">{text}</span>
-          </div>
-        </div>
-      </Link>
-    </li>
+// Links internos usam <Link>; externos usam <a> com rel seguro.
+const SmartLink = ({ href, className, onClick, children }: { href: string; className: string; onClick?: () => void; children: React.ReactNode }) =>
+  href.startsWith("http") ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>{children}</a>
+  ) : (
+    <Link href={href} className={className} onClick={onClick}>{children}</Link>
   );
-};
 
-const MobileLink = ({ text, icon, href, onClick }: { text: string; icon: React.ReactNode; href: string; onClick: () => void }) => {
-  const isExternal = href.startsWith("http");
-  return (
-    <li>
-      <Link 
-        href={href}
-        target={isExternal ? "_blank" : "_self"}
-        onClick={onClick}
-        className="flex items-center gap-4 px-6 py-4 text-brand-light font-medium border-b border-[#2A2A2A] last:border-0 hover:bg-[#2A2A2A] active:bg-brand-primary transition-colors cursor-pointer"
-      >
-        <span className="text-brand-muted [&>svg]:w-5 [&>svg]:h-5">
-          {icon}
-        </span>
-        {text}
-      </Link>
-    </li>
-  );
-};
+// TODO: reativar "Entregas" (Icons.entrega) quando existir app/entregas/page.tsx
+const LINKS = [
+  { text: "Como Funciona", icon: Icons.ajuda, href: "/como-funciona" },
+  { text: "Instagram", icon: Icons.instagram, href: "https://instagram.com/gribb.pt" },
+  { text: "Sobre a Loja", icon: Icons.loja, href: "/sobre" },
+];
+
+const NavLink = ({ text, icon, href }: { text: string; icon: React.ReactNode; href: string }) => (
+  <li>
+    <SmartLink href={href} className="relative flex items-center gap-1.5 group font-medium text-sm px-1">
+      <span className="text-brand-muted group-hover:text-brand-light transition-colors duration-300">{icon}</span>
+      <div className="relative overflow-hidden h-5 leading-5">
+        <div className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] group-hover:-translate-y-1/2">
+          <span className="block text-brand-light">{text}</span>
+          <span className="block text-brand-light" aria-hidden="true">{text}</span>
+        </div>
+      </div>
+    </SmartLink>
+  </li>
+);
+
+const MobileLink = ({ text, icon, href, onClick }: { text: string; icon: React.ReactNode; href: string; onClick: () => void }) => (
+  <li>
+    <SmartLink
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-4 px-6 py-4 text-brand-light font-medium border-b border-[#2A2A2A] hover:bg-[#2A2A2A] active:bg-brand-primary transition-colors"
+    >
+      <span className="text-brand-muted [&>svg]:w-5 [&>svg]:h-5">{icon}</span>
+      {text}
+    </SmartLink>
+  </li>
+);
 
 const StatusBadge = ({ isOpen }: { isOpen: boolean }) => (
   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A1A1A] rounded-full border border-[#2A2A2A] pointer-events-none">
@@ -80,10 +81,10 @@ const StatusBadge = ({ isOpen }: { isOpen: boolean }) => (
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const pathname = usePathname(); // Pega a rota atual da página
-  
-  const lojaAberta = true; 
-  const isHome = pathname === "/"; // Verifica se o usuário está na vitrine principal
+  const pathname = usePathname();
+  const lojaAberta = true;
+  const isHome = pathname === "/";
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
@@ -91,8 +92,9 @@ export default function Navbar() {
       <nav className="relative bg-brand-dark text-brand-light rounded-full p-2 flex items-center justify-between shadow-2xl border border-[#2A2A2A] z-20">
         
         {/* BOTÃO DINÂMICO DE VOLTAR */}
-        <Link 
-          href="/" 
+        <Link
+          href="/"
+          aria-label="Voltar ao catálogo"
           className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
             isHome ? "w-10 h-10" : "h-10 px-4 gap-1.5"
           }`}
@@ -110,12 +112,8 @@ export default function Navbar() {
           )}
         </Link>
 
-        {/* Resto da Navbar continua idêntico... */}
         <ul className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8 px-4 whitespace-nowrap">
-          <NavLink icon={Icons.ajuda} text="Como Funciona" href="/como-funciona" />
-          <NavLink icon={Icons.instagram} text="Instagram" href="https://instagram.com/gribb.pt" />
-          <NavLink icon={Icons.entrega} text="Entregas" href="/entregas" />
-          <NavLink icon={Icons.loja} text="Sobre a Loja" href="/sobre" />
+          {LINKS.map((l) => <NavLink key={l.href} {...l} />)}
         </ul>
 
         <div className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -128,7 +126,7 @@ export default function Navbar() {
 
         <div className="md:hidden flex items-center gap-1 sm:gap-2 shrink-0">
           <a 
-            href="https://wa.me/5541999999999?text=Olá! Preciso de ajuda na Gribb."
+            href={whatsappUrl("Olá! Preciso de ajuda na Gribb.")}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 bg-brand-light text-brand-dark px-3 py-2 rounded-full text-[11px] sm:text-xs font-bold transition-transform active:scale-95"
@@ -138,8 +136,9 @@ export default function Navbar() {
           </a>
 
           <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#2A2A2A] transition-colors focus:outline-none"
+            onClick={() => setIsMenuOpen((v) => !v)}
+            aria-expanded={isMenuOpen}
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#2A2A2A] transition-colors"
             aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {isMenuOpen ? (
@@ -159,10 +158,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="absolute top-16 left-4 right-4 bg-brand-dark border border-[#2A2A2A] rounded-3xl shadow-2xl overflow-hidden md:hidden z-10">
           <ul className="flex flex-col">
-            <MobileLink icon={Icons.ajuda} href="/como-funciona" onClick={() => setIsMenuOpen(false)} text="Como Funciona" />
-            <MobileLink icon={Icons.instagram} href="https://instagram.com/gribb.pt" onClick={() => setIsMenuOpen(false)} text="Instagram" />
-            <MobileLink icon={Icons.entrega} href="/entregas" onClick={() => setIsMenuOpen(false)} text="Entregas" />
-            <MobileLink icon={Icons.loja} href="/sobre" onClick={() => setIsMenuOpen(false)} text="Sobre a Loja" />
+            {LINKS.map((l) => <MobileLink key={l.href} {...l} onClick={closeMenu} />)}
           </ul>
         </div>
       )}

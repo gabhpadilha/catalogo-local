@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar"; // Importamos a Navbar aqui
+import Navbar from "@/components/Navbar";
+import { CartProvider } from "@/components/CartProvider";
 
 export const metadata: Metadata = {
   title: "Gribb | Catálogo Rápido",
   description: "O comércio local com entrega no mesmo dia.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0D0D0D",
 };
 
 export default function RootLayout({
@@ -15,11 +20,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased bg-brand-light text-brand-dark font-sans">
-        {/* A Navbar agora mora no Layout Global, aparecendo em todas as páginas */}
-        <Navbar />
-        
-        {/* O 'children' é onde o Next.js vai injetar o conteúdo de cada página */}
-        {children}
+        <CartProvider>
+          <Navbar />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

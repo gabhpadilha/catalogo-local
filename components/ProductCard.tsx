@@ -1,61 +1,63 @@
-import React from "react";
+import { memo } from "react";
+import Image from "next/image";
+import type { Product } from "@/lib/types";
+import { formatPrice, isOnSale } from "@/lib/format";
 
-interface ProductCardProps {
-  id: number;
-  name: string;
-  store: string;
-  price: number;
-  originalPrice?: number;
-  imageUrl: string;
-  onCardClick: () => void; // Função que abre o modal de detalhes
-}
+type ProductCardProps = {
+  product: Product;
+  onSelect: (product: Product) => void;
+};
 
-export default function ProductCard({ name, store, price, originalPrice, imageUrl, onCardClick }: ProductCardProps) {
-  const discountPercentage = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+function ProductCard({ product, onSelect }: ProductCardProps) {
+  const { name, store, price, originalPrice, imageUrl } = product;
+  const onSale = isOnSale(product);
+  const discount = onSale ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
 
   return (
-    <div 
-      onClick={onCardClick}
-      className="group flex flex-col bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+    <button
+      type="button"
+      onClick={() => onSelect(product)}
+      className="group flex flex-col text-left bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 focus-visible:outline-2 focus-visible:outline-brand-primary"
     >
-      
-      {/* Imagem do Produto */}
       <div className="relative aspect-square w-full overflow-hidden bg-[#F8F8F8]">
-        {originalPrice && discountPercentage > 0 && (
+        {onSale && (
           <div className="absolute top-4 left-4 z-10 bg-brand-primary text-brand-light text-xs font-black px-3 py-1.5 rounded-full shadow-md">
-            -{discountPercentage}%
+            -{discount}%
           </div>
         )}
-        <img 
-          src={imageUrl} 
+        <Image
+          src={imageUrl}
           alt={name}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          fill
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
       </div>
 
-      {/* Informações */}
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-5 flex flex-col flex-1 w-full">
         <span className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-1">{store}</span>
-        <h3 className="text-lg font-bold text-brand-dark leading-tight mb-2 line-clamp-2 group-hover:text-brand-primary transition-colors">{name}</h3>
-        
+        <h3 className="text-lg font-bold text-brand-dark leading-tight mb-2 line-clamp-2 group-hover:text-brand-primary transition-colors">
+          {name}
+        </h3>
+
         <div className="mt-auto pt-4 flex items-end justify-between">
           <div>
-            {originalPrice && (
+            {onSale && (
               <div className="text-sm text-brand-muted line-through font-medium mb-0.5">
-                R$ {originalPrice.toFixed(2).replace('.', ',')}
+                {formatPrice(originalPrice!)}
               </div>
             )}
-            <div className={`font-black text-brand-dark ${originalPrice ? 'text-2xl text-brand-primary' : 'text-xl'}`}>
-              R$ {price.toFixed(2).replace('.', ',')}
+            <div className={`font-black ${onSale ? "text-2xl text-brand-primary" : "text-xl text-brand-dark"}`}>
+              {formatPrice(price)}
             </div>
           </div>
-          
-          {/* Indicador visual de toque/clique */}
-          <div className="bg-gray-100 text-brand-dark px-3.5 py-2 rounded-full text-xs font-bold group-hover:bg-brand-dark group-hover:text-white transition-colors">
+          <span className="bg-gray-100 text-brand-dark px-3.5 py-2 rounded-full text-xs font-bold group-hover:bg-brand-dark group-hover:text-white transition-colors">
             Ver +
-          </div>
+          </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
+
+export default memo(ProductCard);

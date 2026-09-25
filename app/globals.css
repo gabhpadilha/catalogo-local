@@ -8,3 +8,25 @@
   --color-brand-muted: #8C8C8C;
   --color-brand-dark: #0D0D0D;
 }
+@theme {
+  --animate-float-shoe: float 6s ease-in-out infinite;
+  --animate-floor-shadow: shadow-pulse 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+    50% { transform: translateY(-15px) rotate(1deg) scale(1.02); }
+  }
+  @keyframes shadow-pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.35; }
+    50% { transform: translateX(-50%) scale(0.85); opacity: 0.2; }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-float-shoe, .animate-floor-shadow { animation: none; }
+}
