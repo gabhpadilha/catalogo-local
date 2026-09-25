@@ -5,23 +5,16 @@ import Image from "next/image";
 import { useCart } from "./CartProvider";
 import BagIcon from "./BagIcon";
 import { useDialog } from "@/lib/useDialog";
-import { formatPrice, whatsappUrl } from "@/lib/format";
-import type { CartItem } from "@/lib/types";
-
-const buildOrderMessage = (cart: CartItem[], total: number) =>
-  [
-    "Olá! Quero finalizar este pedido na Gribb:",
-    "",
-    ...cart.map(
-      (i) => `• ${i.quantity}x ${i.name} (Tam. ${i.selectedSize}) — ${i.store} — ${formatPrice(i.price * i.quantity)}`
-    ),
-    "",
-    `Total: ${formatPrice(total)}`,
-  ].join("\n");
+import { formatPrice } from "@/lib/format";
 
 export default function CartDrawer() {
-  const { cart, total, isOpen, setOpen, updateQuantity, removeItem } = useCart();
+  const { cart, total, isOpen, setOpen, setCheckoutOpen, updateQuantity, removeItem } = useCart();
   const close = useCallback(() => setOpen(false), [setOpen]);
+
+  const goToCheckout = () => {
+    setOpen(false);
+    setCheckoutOpen(true);
+  };
   useDialog(isOpen, close);
 
   return (
@@ -96,17 +89,16 @@ export default function CartDrawer() {
               <span className="text-gray-500 font-medium">Total da Sacola:</span>
               <span className="text-2xl font-black text-brand-dark">{formatPrice(total)}</span>
             </div>
-            <a
-              href={whatsappUrl(buildOrderMessage(cart, total))}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={goToCheckout}
               className="w-full bg-brand-primary text-brand-light py-4 rounded-full font-bold text-lg hover:bg-brand-dark transition-colors active:scale-95 shadow-lg flex items-center justify-center gap-2"
             >
-              Finalizar pelo WhatsApp
+              Finalizar Compra
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
               </svg>
-            </a>
+            </button>
           </div>
         )}
       </div>

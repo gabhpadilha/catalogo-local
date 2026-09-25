@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { whatsappUrl } from "@/lib/format";
+import SearchBar from "./SearchBar";
 
 const Icons = {
   ajuda: (
@@ -66,14 +67,14 @@ const MobileLink = ({ text, icon, href, onClick }: { text: string; icon: React.R
 );
 
 const StatusBadge = ({ isOpen }: { isOpen: boolean }) => (
-  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A1A1A] rounded-full border border-[#2A2A2A] pointer-events-none">
+  <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 whitespace-nowrap bg-[#1A1A1A] rounded-full border border-[#2A2A2A] pointer-events-none">
     <span className="relative flex h-2 w-2">
       {isOpen && (
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
       )}
       <span className={`relative inline-flex rounded-full h-2 w-2 ${isOpen ? 'bg-green-500' : 'bg-[#555555]'}`}></span>
     </span>
-    <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${isOpen ? 'text-brand-light' : 'text-brand-muted'}`}>
+    <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider ${isOpen ? 'text-brand-light' : 'text-brand-muted'}`}>
       {isOpen ? "Entregando Hoje" : "Entregas Pausadas"}
     </span>
   </div>
@@ -91,32 +92,39 @@ export default function Navbar() {
       
       <nav className="relative bg-brand-dark text-brand-light rounded-full p-2 flex items-center justify-between shadow-2xl border border-[#2A2A2A] z-20">
         
-        {/* BOTÃO DINÂMICO DE VOLTAR */}
-        <Link
-          href="/"
-          aria-label="Voltar ao catálogo"
-          className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
-            isHome ? "w-10 h-10" : "h-10 px-4 gap-1.5"
-          }`}
-        >
-          {isHome ? (
-            <span className="font-black text-xl tracking-tighter">G</span>
-          ) : (
-            <>
-              {/* Ícone de Seta para Esquerda */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-              </svg>
-              <span className="font-black text-sm tracking-tight">Catálogo</span>
-            </>
-          )}
-        </Link>
+        <div className="flex items-center gap-1 shrink-0">
+          {/* BOTÃO DINÂMICO DE VOLTAR */}
+          <Link
+            href="/"
+            aria-label="Voltar ao catálogo"
+            className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
+              isHome ? "w-10 h-10" : "h-10 px-4 gap-1.5"
+            }`}
+          >
+            {isHome ? (
+              <span className="font-black text-xl tracking-tighter">G</span>
+            ) : (
+              <>
+                {/* Ícone de Seta para Esquerda */}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+                <span className="font-black text-sm tracking-tight">Catálogo</span>
+              </>
+            )}
+          </Link>
+
+          {/* No mobile fora da home o botão "Catálogo" ocupa o espaço da lupa */}
+          <div className={isHome ? "contents" : "hidden md:contents"}>
+            <SearchBar onOpen={closeMenu} />
+          </div>
+        </div>
 
         <ul className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8 px-4 whitespace-nowrap">
           {LINKS.map((l) => <NavLink key={l.href} {...l} />)}
         </ul>
 
-        <div className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="md:hidden flex-1 min-w-0 flex justify-center px-1">
           <StatusBadge isOpen={lojaAberta} />
         </div>
 

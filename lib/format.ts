@@ -9,3 +9,7 @@ export const WHATSAPP_NUMBER = "5541999999999";
 
 export const whatsappUrl = (text: string) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+// Minúsculas e sem acentos, para pesquisa tolerante ("tenis" encontra "Tênis").
+export const normalize = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();

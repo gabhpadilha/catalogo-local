@@ -11,6 +11,9 @@ type CartContextValue = {
   total: number;
   isOpen: boolean;
   setOpen: (open: boolean) => void;
+  isCheckoutOpen: boolean;
+  setCheckoutOpen: (open: boolean) => void;
+  clearCart: () => void;
   addItem: (product: Product, size: string) => void;
   updateQuantity: (id: number, size: string, delta: number) => void;
   removeItem: (id: number, size: string) => void;
@@ -24,6 +27,7 @@ const sameItem = (item: CartItem, id: number, size: string) =>
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOpen, setOpen] = useState(false);
+  const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Restaura a sacola do localStorage após montar (evita mismatch de hidratação).
@@ -64,6 +68,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prev) => prev.filter((i) => !sameItem(i, id, size)));
   }, []);
 
+  const clearCart = useCallback(() => setCart([]), []);
+
   const value = useMemo(() => {
     let count = 0;
     let total = 0;
@@ -71,8 +77,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       count += i.quantity;
       total += i.price * i.quantity;
     }
-    return { cart, count, total, isOpen, setOpen, addItem, updateQuantity, removeItem };
-  }, [cart, isOpen, addItem, updateQuantity, removeItem]);
+    return {
+      cart, count, total, isOpen, setOpen, isCheckoutOpen, setCheckoutOpen,
+      clearCart, addItem, updateQuantity, removeItem,
+    };
+  }, [cart, isOpen, isCheckoutOpen, clearCart, addItem, updateQuantity, removeItem]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
