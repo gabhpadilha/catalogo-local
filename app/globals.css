@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  /* Sua paleta de cores personalizada */
+  --color-brand-primary: #73030D;
+  --color-brand-secondary: #732F3B;
+  --color-brand-light: #F2F2F2;
+  --color-brand-muted: #8C8C8C;
+  --color-brand-dark: #0D0D0D;
+}
