@@ -16,7 +16,7 @@ const scrollToCatalog = () => {
 };
 
 // Botão de lupa que expande um campo sobre a própria Navbar (não altera o layout).
-export default function SearchBar({ onOpen }: { onOpen?: () => void }) {
+export default function SearchBar({ home, onOpen }: { home: string; onOpen?: () => void }) {
   const { query, setQuery } = useSearch();
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +39,8 @@ export default function SearchBar({ onOpen }: { onOpen?: () => void }) {
 
   const handleChange = (value: string) => {
     if (!query && value) {
-      if (pathname === "/") scrollToCatalog();
-      else router.push("/#catalogo");
+      if (pathname === home) scrollToCatalog();
+      else router.push(`${home}#catalogo`);
     }
     setQuery(value);
   };

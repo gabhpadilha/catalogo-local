@@ -1,7 +1,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
-import { formatPrice, isOnSale } from "@/lib/format";
+import { formatPrice, inStock, isOnSale } from "@/lib/format";
 
 type ProductCardProps = {
   product: Product;
@@ -9,8 +9,9 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product, onSelect }: ProductCardProps) {
-  const { name, store, price, originalPrice, imageUrl } = product;
+  const { name, category, price, originalPrice, imageUrl } = product;
   const onSale = isOnSale(product);
+  const available = inStock(product);
   const discount = onSale ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
 
   return (
@@ -20,7 +21,12 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
       className="group flex flex-col text-left bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 focus-visible:outline-2 focus-visible:outline-brand-primary"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-[#F8F8F8]">
-        {onSale && (
+        {!available && (
+          <div className="absolute inset-0 z-10 bg-white/60 flex items-center justify-center">
+            <span className="bg-brand-dark text-brand-light text-xs font-black px-4 py-2 rounded-full uppercase tracking-wider">Esgotado</span>
+          </div>
+        )}
+        {onSale && available && (
           <div className="absolute top-4 left-4 z-10 bg-brand-primary text-brand-light text-xs font-black px-3 py-1.5 rounded-full shadow-md">
             -{discount}%
           </div>
@@ -35,7 +41,7 @@ function ProductCard({ product, onSelect }: ProductCardProps) {
       </div>
 
       <div className="p-5 flex flex-col flex-1 w-full">
-        <span className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-1">{store}</span>
+        <span className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-1">{category}</span>
         <h3 className="text-lg font-bold text-brand-dark leading-tight mb-2 line-clamp-2 group-hover:text-brand-primary transition-colors">
           {name}
         </h3>

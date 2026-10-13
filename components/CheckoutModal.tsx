@@ -4,8 +4,8 @@ import { useCallback, useState } from "react";
 import { useCart } from "./CartProvider";
 import { useDialog } from "@/lib/useDialog";
 import { formatPrice, whatsappUrl } from "@/lib/format";
-import { DELIVERY_OPTIONS } from "@/lib/delivery";
-import type { CartItem } from "@/lib/types";
+import { useStore } from "./StoreProvider";
+import type { CartItem, DeliveryZone } from "@/lib/types";
 
 const CUSTOMER_KEY = "gribb-customer";
 const NAME_MAX = 60;
@@ -16,30 +16,31 @@ type Customer = { name: string; deliveryId: string; address: string };
 // Só é montado no cliente (após interação), por isso o localStorage é seguro aqui.
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
 
-const loadCustomer = (): Customer => {
+// Dados do cliente são compartilhados entre lojas; o bairro é validado contra as zonas da loja atual.
+const loadCustomer = (zones: DeliveryZone[]): Customer => {
   let saved: Partial<Record<keyof Customer, unknown>> = {};
   try {
     saved = JSON.parse(localStorage.getItem(CUSTOMER_KEY) ?? "{}") ?? {};
   } catch {}
-  const deliveryId = DELIVERY_OPTIONS.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : DELIVERY_OPTIONS[0].id;
+  const deliveryId = zones.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : zones[0]?.id ?? "";
   return { name: str(saved.name, NAME_MAX), deliveryId, address: str(saved.address, ADDRESS_MAX) };
 };
 
 // Uma linha só, sem espaços repetidos.
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
-const buildOrderMessage = (cart: CartItem[], c: Customer, subtotal: number, fee: number, deliveryLabel: string, pickup: boolean) =>
+const buildOrderMessage = (storeName: string, city: string, cart: CartItem[], c: Customer, subtotal: number, fee: number, deliveryLabel: string, pickup: boolean) =>
   [
-    "Olá! Quero fazer este pedido na Gribb:",
+    `Olá! Quero fazer este pedido na ${storeName}:`,
     "",
-    ...cart.map((i) => `• ${i.quantity}x ${i.name} (Tam. ${i.selectedSize}) — ${i.store} — ${formatPrice(i.price * i.quantity)}`),
+    ...cart.map((i) => `• ${i.quantity}x ${i.name} (${i.selectedSize}) — ${formatPrice(i.price * i.quantity)}`),
     "",
     `Subtotal: ${formatPrice(subtotal)}`,
     pickup ? "Entrega: Retirada na loja (grátis)" : `Frete Uber Flash (${deliveryLabel}): ~${formatPrice(fee)} — a confirmar`,
     `*Total${pickup ? "" : " estimado"}: ${formatPrice(subtotal + fee)}*`,
     "",
     `Nome: ${clean(c.name)}`,
-    pickup ? "Retirada na loja" : `Endereço: ${clean(c.address)} — ${deliveryLabel}, Guaratuba`,
+    pickup ? "Retirada na loja" : `Endereço: ${clean(c.address)} — ${deliveryLabel}, ${city}`,
   ].join("\n");
 
 const inputClass =
@@ -48,11 +49,13 @@ const labelClass = "block text-xs font-bold text-brand-dark uppercase tracking-w
 
 function CheckoutForm({ onClose }: { onClose: () => void }) {
   const { cart, total: subtotal, clearCart } = useCart();
-  const [customer, setCustomer] = useState(loadCustomer);
+  const { store } = useStore();
+  const zones = store.zones;
+  const [customer, setCustomer] = useState(() => loadCustomer(zones));
   const [sentUrl, setSentUrl] = useState<string | null>(null);
   useDialog(true, onClose);
 
-  const delivery = DELIVERY_OPTIONS.find((o) => o.id === customer.deliveryId) ?? DELIVERY_OPTIONS[0];
+  const delivery: DeliveryZone = zones.find((o) => o.id === customer.deliveryId) ?? zones[0] ?? { id: "", label: "A combinar", fee: 0 };
   const pickup = !!delivery.pickup;
   const update = (field: keyof Customer) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setCustomer((c) => ({ ...c, [field]: e.target.value }));
@@ -60,7 +63,7 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) return;
-    const url = whatsappUrl(buildOrderMessage(cart, customer, subtotal, delivery.fee, delivery.label, pickup));
+    const url = whatsappUrl(store.whatsapp, buildOrderMessage(store.name, store.city, cart, customer, subtotal, delivery.fee, delivery.label, pickup));
     window.open(url, "_blank", "noopener,noreferrer");
     try {
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
@@ -120,10 +123,10 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label htmlFor="co-delivery" className={labelClass}>Bairro de Entrega · Guaratuba</label>
+            <label htmlFor="co-delivery" className={labelClass}>Bairro de Entrega · {store.city}</label>
             <div className="relative">
               <select id="co-delivery" value={customer.deliveryId} onChange={update("deliveryId")} className={`${inputClass} appearance-none pr-10`}>
-                {DELIVERY_OPTIONS.map((o) => (
+                {zones.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label} {o.pickup ? "(Grátis)" : `(~${formatPrice(o.fee)})`}
                   </option>

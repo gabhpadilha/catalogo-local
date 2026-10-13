@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import { CartProvider } from "@/components/CartProvider";
-import { SearchProvider } from "@/components/SearchProvider";
+import { PLATFORM } from "@/lib/platform";
 
 export const metadata: Metadata = {
-  title: "Gribb | Catálogo Rápido",
-  description: "O comércio local com entrega no mesmo dia.",
+  title: { default: PLATFORM.name, template: `%s | ${PLATFORM.name}` },
+  description: PLATFORM.tagline,
 };
 
 export const viewport: Viewport = {
@@ -20,14 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="antialiased bg-brand-light text-brand-dark font-sans">
-        <CartProvider>
-          <SearchProvider>
-            <Navbar />
-            {children}
-          </SearchProvider>
-        </CartProvider>
-      </body>
+      <body className="antialiased bg-brand-light text-brand-dark font-sans">{children}</body>
     </html>
   );
 }

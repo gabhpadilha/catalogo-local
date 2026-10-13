@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { whatsappUrl } from "@/lib/format";
 import SearchBar from "./SearchBar";
+import { useStore } from "./StoreProvider";
 
 const Icons = {
   ajuda: (
@@ -32,11 +33,11 @@ const SmartLink = ({ href, className, onClick, children }: { href: string; class
     <Link href={href} className={className} onClick={onClick}>{children}</Link>
   );
 
-const LINKS = [
+const buildLinks = (slug: string, instagram?: string) => [
   { text: "Como Funciona", icon: Icons.ajuda, href: "/como-funciona" },
-  { text: "Entregas", icon: Icons.entrega, href: "/entregas" },
-  { text: "Instagram", icon: Icons.instagram, href: "https://instagram.com/gribb.pt" },
-  { text: "Sobre a Loja", icon: Icons.loja, href: "/sobre" },
+  { text: "Entregas", icon: Icons.entrega, href: `/${slug}/entregas` },
+  ...(instagram ? [{ text: "Instagram", icon: Icons.instagram, href: instagram }] : []),
+  { text: "Outras Lojas", icon: Icons.loja, href: "/" },
 ];
 
 const NavLink = ({ text, icon, href }: { text: string; icon: React.ReactNode; href: string }) => (
@@ -83,8 +84,10 @@ const StatusBadge = ({ isOpen }: { isOpen: boolean }) => (
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const lojaAberta = true;
-  const isHome = pathname === "/";
+  const { store } = useStore();
+  const home = `/${store.slug}`;
+  const isHome = pathname === home;
+  const links = buildLinks(store.slug, store.instagram);
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
@@ -95,14 +98,14 @@ export default function Navbar() {
         <div className="flex items-center gap-1 shrink-0">
           {/* BOTÃO DINÂMICO DE VOLTAR */}
           <Link
-            href="/"
-            aria-label="Voltar ao catálogo"
+            href={home}
+            aria-label={`${store.name} — catálogo`}
             className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
               isHome ? "w-10 h-10" : "h-10 px-4 gap-1.5"
             }`}
           >
             {isHome ? (
-              <span className="font-black text-xl tracking-tighter">G</span>
+              <span className="font-black text-xl tracking-tighter">{store.name.charAt(0)}</span>
             ) : (
               <>
                 {/* Ícone de Seta para Esquerda */}
@@ -116,25 +119,25 @@ export default function Navbar() {
 
           {/* No mobile fora da home o botão "Catálogo" ocupa o espaço da lupa */}
           <div className={isHome ? "contents" : "hidden md:contents"}>
-            <SearchBar onOpen={closeMenu} />
+            <SearchBar home={home} onOpen={closeMenu} />
           </div>
         </div>
 
         <ul className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8 px-4 whitespace-nowrap">
-          {LINKS.map((l) => <NavLink key={l.href} {...l} />)}
+          {links.map((l) => <NavLink key={l.href} {...l} />)}
         </ul>
 
         <div className="md:hidden flex-1 min-w-0 flex justify-center px-1">
-          <StatusBadge isOpen={lojaAberta} />
+          <StatusBadge isOpen={store.deliveryOpen} />
         </div>
 
         <div className="hidden md:block shrink-0">
-          <StatusBadge isOpen={lojaAberta} />
+          <StatusBadge isOpen={store.deliveryOpen} />
         </div>
 
         <div className="md:hidden flex items-center gap-1 sm:gap-2 shrink-0">
           <a 
-            href={whatsappUrl("Olá! Preciso de ajuda na Gribb.")}
+            href={whatsappUrl(store.whatsapp, `Olá! Preciso de ajuda na ${store.name}.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 bg-brand-light text-brand-dark px-3 py-2 rounded-full text-[11px] sm:text-xs font-bold transition-transform active:scale-95"
@@ -166,7 +169,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="absolute top-16 left-4 right-4 bg-brand-dark border border-[#2A2A2A] rounded-3xl shadow-2xl overflow-hidden md:hidden z-10">
           <ul className="flex flex-col">
-            {LINKS.map((l) => <MobileLink key={l.href} {...l} onClick={closeMenu} />)}
+            {links.map((l) => <MobileLink key={l.href} {...l} onClick={closeMenu} />)}
           </ul>
         </div>
       )}

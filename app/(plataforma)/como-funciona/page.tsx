@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import DeliverySteps from "@/components/DeliverySteps";
 
 export const metadata: Metadata = {
-  title: "Como Funciona | Gribb",
+  title: "Como Funciona",
   description: "Escolha na vitrine, envie o pedido pelo WhatsApp, pague via Pix e receba hoje em Guaratuba.",
 };
 
@@ -22,7 +22,7 @@ export default function ComoFuncionaPage() {
       </h1>
 
       <p className="text-lg md:text-xl text-brand-muted mb-16 max-w-2xl font-medium">
-        Esqueça os prazos de 7 dias úteis e fretes absurdos. Veja como é simples comprar na Gribb em Guaratuba:
+        Esqueça os prazos de 7 dias úteis e fretes absurdos. Veja como é simples comprar no comércio de Guaratuba:
       </p>
 
       <DeliverySteps steps={STEPS} />

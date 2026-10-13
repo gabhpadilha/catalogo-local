@@ -14,7 +14,7 @@ type ProductModalProps = {
 
 export default function ProductModal({ product, onClose }: ProductModalProps) {
   const { addItem } = useCart();
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
+  const [selectedSize, setSelectedSize] = useState(product.variants.find((v) => v.inStock)?.label ?? "");
   useDialog(true, onClose);
 
   const handleAdd = () => {
@@ -48,7 +48,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
         </div>
 
         <div className="p-6 sm:p-8 flex-1 overflow-y-auto">
-          <span className="text-xs font-bold text-brand-muted uppercase tracking-wider">{product.store}</span>
+          <span className="text-xs font-bold text-brand-muted uppercase tracking-wider">{product.category}</span>
           <h3 id="product-modal-title" className="text-2xl font-black text-brand-dark leading-tight mt-1 mb-2">
             {product.name}
           </h3>
@@ -64,22 +64,24 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
 
           <fieldset className="mb-6">
             <legend className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2.5">
-              Escolha o Tamanho:
+              Escolha uma opção:
             </legend>
             <div className="flex flex-wrap gap-2">
-              {product.sizes.map((size) => (
+              {product.variants.map(({ label, inStock }) => (
                 <button
-                  key={size}
+                  key={label}
                   type="button"
-                  aria-pressed={selectedSize === size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`min-w-[48px] h-12 px-4 rounded-xl font-bold text-sm transition-all active:scale-95 border ${
-                    selectedSize === size
+                  aria-pressed={selectedSize === label}
+                  disabled={!inStock}
+                  title={inStock ? undefined : "Esgotado"}
+                  onClick={() => setSelectedSize(label)}
+                  className={`min-w-[48px] h-12 px-4 rounded-xl font-bold text-sm transition-all active:scale-95 border disabled:opacity-40 disabled:line-through disabled:cursor-not-allowed ${
+                    selectedSize === label
                       ? "bg-brand-dark text-white border-brand-dark shadow-md"
                       : "bg-white text-brand-dark border-gray-200 hover:border-brand-dark"
                   }`}
                 >
-                  {size}
+                  {label}
                 </button>
               ))}
             </div>
@@ -91,7 +93,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
             disabled={!selectedSize}
             className="w-full bg-brand-primary text-brand-light py-4 rounded-full font-bold text-lg hover:bg-brand-dark transition-colors active:scale-95 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            Adicionar à Sacola
+            {selectedSize ? "Adicionar à Sacola" : "Esgotado"}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>

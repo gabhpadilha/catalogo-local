@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sobre | Gribb",
-  description: "Streetwear com entrega no mesmo dia em Guaratuba.",
+  title: "Sobre",
+  description: "O comércio de Guaratuba com entrega no mesmo dia.",
 };
 
 export default function SobrePage() {
@@ -16,7 +16,7 @@ export default function SobrePage() {
       
       <div className="space-y-6 text-lg md:text-xl text-brand-muted font-medium leading-relaxed">
         <p>
-          A Gribb nasceu de uma necessidade real em Guaratuba: a falta de opções práticas para comprar online no comércio da nossa própria cidade com entrega imediata.
+          Nascemos de uma necessidade real em Guaratuba: a falta de opções práticas para comprar online no comércio da nossa própria cidade com entrega imediata.
         </p>
         <p>
           Enquanto grandes plataformas pedem dias para entregar, nós conectamos você diretamente ao estoque físico dos lojistas locais. Pediu pelo WhatsApp, pagou no Pix, chegou na sua casa hoje.

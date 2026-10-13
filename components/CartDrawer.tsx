@@ -57,10 +57,10 @@ export default function CartDrawer() {
                 <Image src={item.imageUrl} alt={item.name} width={96} height={96} className="w-24 h-24 object-cover rounded-xl bg-white border border-gray-100" />
 
                 <div className="flex-1 flex flex-col py-1">
-                  <span className="text-[10px] font-bold text-brand-muted uppercase tracking-wider">{item.store}</span>
+                  <span className="text-[10px] font-bold text-brand-muted uppercase tracking-wider">{item.category}</span>
                   <h4 className="text-sm font-bold text-brand-dark leading-tight line-clamp-2 my-0.5 pr-6">{item.name}</h4>
                   <span className="inline-block bg-gray-200/80 text-brand-dark font-bold text-[10px] px-2 py-0.5 rounded-md w-max mb-2">
-                    Tamanho: {item.selectedSize}
+                    {item.selectedSize}
                   </span>
 
                   <div className="mt-auto flex items-center justify-between">

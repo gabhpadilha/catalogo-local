@@ -1,0 +1,6 @@
+// Identidade da plataforma (marketplace). Troque o nome quando definir a marca.
+export const PLATFORM = {
+  name: "Vitrine Guaratuba",
+  tagline: "As lojas de Guaratuba no seu celular, com entrega no mesmo dia.",
+  city: "Guaratuba",
+};

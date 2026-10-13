@@ -1,11 +1,11 @@
-import { DELIVERY_OPTIONS } from "@/lib/delivery";
+import type { DeliveryZone } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
 // Valores de referência: o frete real do Uber Flash é dinâmico e confirmado no WhatsApp.
-export default function DeliveryZones() {
+export default function DeliveryZones({ zones }: { zones: DeliveryZone[] }) {
   return (
     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {DELIVERY_OPTIONS.map((opt) => (
+      {zones.map((opt) => (
         <li
           key={opt.id}
           className={`flex items-center justify-between p-6 rounded-[2.5rem] border transition-shadow hover:shadow-md ${
