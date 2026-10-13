@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { CartItem, Product } from "@/lib/types";
+import { PRODUCTS } from "@/lib/products";
 
 const STORAGE_KEY = "gribb-cart";
 
@@ -21,8 +22,27 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+export const MAX_QTY = 20;
+
+type StoredItem = Pick<CartItem, "id" | "selectedSize" | "quantity">;
+
 const sameItem = (item: CartItem, id: number, size: string) =>
   item.id === id && item.selectedSize === size;
+
+// Reconstrói a sacola a partir do catálogo, descartando dados inválidos ou adulterados.
+const restoreCart = (data: unknown): CartItem[] => {
+  if (!Array.isArray(data)) return [];
+  const items: CartItem[] = [];
+  for (const raw of data as Partial<StoredItem>[]) {
+    const product = PRODUCTS.find((p) => p.id === raw?.id);
+    const size = raw?.selectedSize;
+    const qty = Math.floor(Number(raw?.quantity));
+    if (!product || typeof size !== "string" || !product.sizes.includes(size) || !(qty >= 1)) continue;
+    if (items.some((i) => sameItem(i, product.id, size))) continue;
+    items.push({ ...product, selectedSize: size, quantity: Math.min(qty, MAX_QTY) });
+  }
+  return items;
+};
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -35,23 +55,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setCart(JSON.parse(saved));
+      if (saved) setCart(restoreCart(JSON.parse(saved)));
     } catch {}
     setHydrated(true);
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Persiste só id/tamanho/quantidade: preço e nome vêm sempre do catálogo.
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+      const stored: StoredItem[] = cart.map(({ id, selectedSize, quantity }) => ({ id, selectedSize, quantity }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
     } catch {}
   }, [cart, hydrated]);
 
   const addItem = useCallback((product: Product, size: string) => {
     setCart((prev) =>
       prev.some((i) => sameItem(i, product.id, size))
-        ? prev.map((i) => (sameItem(i, product.id, size) ? { ...i, quantity: i.quantity + 1 } : i))
+        ? prev.map((i) => (sameItem(i, product.id, size) ? { ...i, quantity: Math.min(i.quantity + 1, MAX_QTY) } : i))
         : [...prev, { ...product, quantity: 1, selectedSize: size }]
     );
   }, []);
@@ -59,7 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateQuantity = useCallback((id: number, size: string, delta: number) => {
     setCart((prev) =>
       prev.map((i) =>
-        sameItem(i, id, size) ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i
+        sameItem(i, id, size) ? { ...i, quantity: Math.min(MAX_QTY, Math.max(1, i.quantity + delta)) } : i
       )
     );
   }, []);

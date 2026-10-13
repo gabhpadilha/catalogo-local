@@ -3,6 +3,7 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import ProductModal from "./ProductModal";
+import FilterPills from "./FilterPills";
 import { PRODUCTS } from "@/lib/products";
 import { useSearch } from "./SearchProvider";
 import { isOnSale, normalize } from "@/lib/format";
@@ -51,26 +52,7 @@ export default function Catalog() {
         <p className="text-brand-muted font-medium">Clique em um produto para ver detalhes e escolher o tamanho.</p>
       </div>
 
-      <div className="flex flex-wrap gap-2.5 mb-10 justify-center md:justify-start">
-        {CATEGORIES.map((category) => {
-          const active = activeFilter === category;
-          return (
-            <button
-              key={category}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setActiveFilter(category)}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 ${
-                active
-                  ? `${category === SALES ? "bg-brand-primary" : "bg-brand-dark"} text-brand-light shadow-md`
-                  : "bg-white text-brand-muted border border-gray-200 hover:border-brand-dark hover:text-brand-dark"
-              }`}
-            >
-              {category}
-            </button>
-          );
-        })}
-      </div>
+      <FilterPills options={CATEGORIES} active={activeFilter} highlight={SALES} onChange={setActiveFilter} />
 
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

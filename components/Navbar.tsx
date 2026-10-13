@@ -32,9 +32,9 @@ const SmartLink = ({ href, className, onClick, children }: { href: string; class
     <Link href={href} className={className} onClick={onClick}>{children}</Link>
   );
 
-// TODO: reativar "Entregas" (Icons.entrega) quando existir app/entregas/page.tsx
 const LINKS = [
   { text: "Como Funciona", icon: Icons.ajuda, href: "/como-funciona" },
+  { text: "Entregas", icon: Icons.entrega, href: "/entregas" },
   { text: "Instagram", icon: Icons.instagram, href: "https://instagram.com/gribb.pt" },
   { text: "Sobre a Loja", icon: Icons.loja, href: "/sobre" },
 ];

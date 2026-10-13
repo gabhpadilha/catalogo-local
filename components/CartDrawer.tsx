@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import Image from "next/image";
-import { useCart } from "./CartProvider";
+import { MAX_QTY, useCart } from "./CartProvider";
 import BagIcon from "./BagIcon";
 import { useDialog } from "@/lib/useDialog";
 import { formatPrice } from "@/lib/format";
@@ -67,7 +67,7 @@ export default function CartDrawer() {
                     <div className="flex items-center bg-white border border-gray-200 rounded-full overflow-hidden h-8">
                       <button type="button" aria-label="Diminuir" onClick={() => updateQuantity(item.id, item.selectedSize, -1)} disabled={item.quantity <= 1} className="w-8 h-full flex items-center justify-center text-brand-dark hover:bg-gray-100 disabled:opacity-30 transition-colors">-</button>
                       <span className="w-6 text-center text-xs font-bold text-brand-dark">{item.quantity}</span>
-                      <button type="button" aria-label="Aumentar" onClick={() => updateQuantity(item.id, item.selectedSize, 1)} className="w-8 h-full flex items-center justify-center text-brand-dark hover:bg-gray-100 transition-colors">+</button>
+                      <button type="button" aria-label="Aumentar" onClick={() => updateQuantity(item.id, item.selectedSize, 1)} disabled={item.quantity >= MAX_QTY} className="w-8 h-full flex items-center justify-center text-brand-dark hover:bg-gray-100 disabled:opacity-30 transition-colors">+</button>
                     </div>
                     <div className="font-black text-brand-primary">{formatPrice(item.price * item.quantity)}</div>
                   </div>

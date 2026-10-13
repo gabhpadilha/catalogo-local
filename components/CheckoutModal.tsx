@@ -8,17 +8,25 @@ import { DELIVERY_OPTIONS } from "@/lib/delivery";
 import type { CartItem } from "@/lib/types";
 
 const CUSTOMER_KEY = "gribb-customer";
+const NAME_MAX = 60;
+const ADDRESS_MAX = 160;
 
 type Customer = { name: string; deliveryId: string; address: string };
 
 // Só é montado no cliente (após interação), por isso o localStorage é seguro aqui.
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+
 const loadCustomer = (): Customer => {
+  let saved: Partial<Record<keyof Customer, unknown>> = {};
   try {
-    const saved = localStorage.getItem(CUSTOMER_KEY);
-    if (saved) return JSON.parse(saved);
+    saved = JSON.parse(localStorage.getItem(CUSTOMER_KEY) ?? "{}") ?? {};
   } catch {}
-  return { name: "", deliveryId: DELIVERY_OPTIONS[0].id, address: "" };
+  const deliveryId = DELIVERY_OPTIONS.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : DELIVERY_OPTIONS[0].id;
+  return { name: str(saved.name, NAME_MAX), deliveryId, address: str(saved.address, ADDRESS_MAX) };
 };
+
+// Uma linha só, sem espaços repetidos.
+const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
 const buildOrderMessage = (cart: CartItem[], c: Customer, subtotal: number, fee: number, deliveryLabel: string, pickup: boolean) =>
   [
@@ -27,11 +35,11 @@ const buildOrderMessage = (cart: CartItem[], c: Customer, subtotal: number, fee:
     ...cart.map((i) => `• ${i.quantity}x ${i.name} (Tam. ${i.selectedSize}) — ${i.store} — ${formatPrice(i.price * i.quantity)}`),
     "",
     `Subtotal: ${formatPrice(subtotal)}`,
-    `Entrega (${deliveryLabel}): ${fee ? formatPrice(fee) : "Grátis"}`,
-    `*Total: ${formatPrice(subtotal + fee)}*`,
+    pickup ? "Entrega: Retirada na loja (grátis)" : `Frete Uber Flash (${deliveryLabel}): ~${formatPrice(fee)} — a confirmar`,
+    `*Total${pickup ? "" : " estimado"}: ${formatPrice(subtotal + fee)}*`,
     "",
-    `Nome: ${c.name.trim()}`,
-    pickup ? "Retirada na loja" : `Endereço: ${c.address.trim()} — ${deliveryLabel}, Guaratuba`,
+    `Nome: ${clean(c.name)}`,
+    pickup ? "Retirada na loja" : `Endereço: ${clean(c.address)} — ${deliveryLabel}, Guaratuba`,
   ].join("\n");
 
 const inputClass =
@@ -41,6 +49,7 @@ const labelClass = "block text-xs font-bold text-brand-dark uppercase tracking-w
 function CheckoutForm({ onClose }: { onClose: () => void }) {
   const { cart, total: subtotal, clearCart } = useCart();
   const [customer, setCustomer] = useState(loadCustomer);
+  const [sentUrl, setSentUrl] = useState<string | null>(null);
   useDialog(true, onClose);
 
   const delivery = DELIVERY_OPTIONS.find((o) => o.id === customer.deliveryId) ?? DELIVERY_OPTIONS[0];
@@ -50,14 +59,34 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const message = buildOrderMessage(cart, customer, subtotal, delivery.fee, delivery.label, pickup);
-    window.open(whatsappUrl(message), "_blank", "noopener,noreferrer");
+    if (cart.length === 0) return;
+    const url = whatsappUrl(buildOrderMessage(cart, customer, subtotal, delivery.fee, delivery.label, pickup));
+    window.open(url, "_blank", "noopener,noreferrer");
     try {
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
     } catch {}
+    // Mantém o link à mão caso o navegador bloqueie a nova aba.
+    setSentUrl(url);
     clearCart();
-    onClose();
   };
+
+  if (sentUrl) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div role="dialog" aria-modal="true" aria-labelledby="checkout-done" className="relative bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl p-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-center">
+          <h2 id="checkout-done" className="text-2xl font-black text-brand-dark tracking-tight mb-2">Pedido enviado!</h2>
+          <p className="text-brand-muted mb-6">Finalize a conversa no WhatsApp para confirmar o frete e receber a chave Pix.</p>
+          <a href={sentUrl} target="_blank" rel="noopener noreferrer" className="block w-full bg-brand-primary text-brand-light py-4 rounded-full font-bold text-lg hover:bg-brand-dark transition-colors active:scale-95 shadow-lg mb-3">
+            Abrir WhatsApp novamente
+          </a>
+          <button type="button" onClick={onClose} className="w-full py-3 rounded-full font-bold text-brand-muted hover:text-brand-dark transition-colors">
+            Voltar ao catálogo
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
@@ -87,7 +116,7 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto overscroll-contain p-6 sm:px-8 space-y-5">
           <div>
             <label htmlFor="co-name" className={labelClass}>Nome</label>
-            <input id="co-name" required autoComplete="name" placeholder="Como te chamamos?" value={customer.name} onChange={update("name")} className={inputClass} />
+            <input id="co-name" required autoComplete="name" maxLength={NAME_MAX} placeholder="Como te chamamos?" value={customer.name} onChange={update("name")} className={inputClass} />
           </div>
 
           <div>
@@ -96,7 +125,7 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
               <select id="co-delivery" value={customer.deliveryId} onChange={update("deliveryId")} className={`${inputClass} appearance-none pr-10`}>
                 {DELIVERY_OPTIONS.map((o) => (
                   <option key={o.id} value={o.id}>
-                    {o.label} {o.fee ? `(+${formatPrice(o.fee)})` : "(Grátis)"}
+                    {o.label} {o.pickup ? "(Grátis)" : `(~${formatPrice(o.fee)})`}
                   </option>
                 ))}
               </select>
@@ -109,7 +138,7 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
           {!pickup && (
             <div>
               <label htmlFor="co-address" className={labelClass}>Endereço Completo</label>
-              <input id="co-address" required autoComplete="street-address" placeholder="Rua e número" value={customer.address} onChange={update("address")} className={inputClass} />
+              <input id="co-address" required autoComplete="street-address" maxLength={ADDRESS_MAX} placeholder="Rua, número e referência" value={customer.address} onChange={update("address")} className={inputClass} />
             </div>
           )}
 
@@ -119,14 +148,17 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
               <dd>{formatPrice(subtotal)}</dd>
             </div>
             <div className="flex justify-between text-brand-muted font-medium">
-              <dt>Entrega · {delivery.label}</dt>
-              <dd>{delivery.fee ? formatPrice(delivery.fee) : "Grátis"}</dd>
+              <dt>{pickup ? "Retirada na loja" : "Frete Uber Flash · estimativa"}</dt>
+              <dd>{pickup ? "Grátis" : `~${formatPrice(delivery.fee)}`}</dd>
             </div>
             <div className="flex justify-between items-baseline pt-3 mt-1 border-t border-gray-200">
-              <dt className="font-bold text-brand-dark">Total</dt>
+              <dt className="font-bold text-brand-dark">{pickup ? "Total" : "Total estimado"}</dt>
               <dd className="text-2xl font-black text-brand-primary">{formatPrice(subtotal + delivery.fee)}</dd>
             </div>
           </dl>
+          {!pickup && (
+            <p className="text-xs text-brand-muted -mt-2">O frete final é cotado no Uber no momento do pedido e confirmado no WhatsApp antes do Pix.</p>
+          )}
         </div>
 
         <div className="p-6 sm:px-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] border-t border-gray-100">
