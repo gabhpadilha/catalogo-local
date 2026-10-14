@@ -1,0 +1,6 @@
+# Variáveis ficam no painel da Vercel; skills do agente não vão para o deploy.
+.env*
+!.env.example
+.agents
+.claude
+skills-lock.json
