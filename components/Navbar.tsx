@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { whatsappUrl } from "@/lib/format";
+import { LAST_SEARCH_KEY } from "@/lib/storage";
 import { SearchField, SearchToggle } from "./SearchBar";
 import { useStore } from "./StoreProvider";
 import { useCart } from "./CartProvider";
@@ -11,6 +12,16 @@ import StoreMark from "./StoreMark";
 import DeliveryStatus from "./DeliveryStatus";
 import Sheet, { SheetIconButton } from "./Sheet";
 import { BagIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, InstagramIcon, MenuIcon, WhatsAppIcon } from "./icons";
+
+// Termo da última busca na home (por aba). No servidor não existe: a faixa começa com "Todas as lojas".
+const readLastSearch = () => {
+  try {
+    return sessionStorage.getItem(LAST_SEARCH_KEY);
+  } catch {
+    return null;
+  }
+};
+const noSubscribe = () => () => {};
 
 const menuRow =
   "flex items-center justify-between gap-3 min-h-13 px-3 rounded-xl font-medium hover:bg-brand-soft aria-[current=page]:bg-brand-soft transition-colors";
@@ -40,6 +51,7 @@ export default function Navbar() {
     { text: "Entregas", href: `${home}/entregas` },
   ];
   const placeholder = `Buscar na ${store.name}`;
+  const lastSearch = useSyncExternalStore(noSubscribe, readLastSearch, () => null);
   const closeMenu = () => setMenuOpen(false);
 
   return (
@@ -47,11 +59,19 @@ export default function Navbar() {
       {/* Faixa da plataforma: mostra onde a loja está e leva às outras. Some ao rolar. */}
       <div className="bg-brand-dark text-brand-light text-[13px]">
         <div className="max-w-6xl mx-auto h-9 px-4 sm:px-6 flex items-center justify-between gap-4">
-          <Link href="/" className="inline-flex items-center gap-1 -ml-1 pr-1 rounded-sm opacity-85 hover:opacity-100 hover:underline underline-offset-4">
-            <ChevronLeftIcon className="w-4 h-4" />
-            <span>
-              Todas as lojas<span className="hidden sm:inline"> de {store.city}</span>
-            </span>
+          {/* Quem veio da busca da home volta para os resultados. */}
+          <Link
+            href={lastSearch ? `/?q=${encodeURIComponent(lastSearch)}` : "/"}
+            className="inline-flex items-center gap-1 -ml-1 pr-1 min-w-0 rounded-sm opacity-85 hover:opacity-100 hover:underline underline-offset-4"
+          >
+            <ChevronLeftIcon className="w-4 h-4 shrink-0" />
+            {lastSearch ? (
+              <span className="truncate">Voltar para &ldquo;{lastSearch}&rdquo;</span>
+            ) : (
+              <span>
+                Todas as lojas<span className="hidden sm:inline"> de {store.city}</span>
+              </span>
+            )}
           </Link>
           <DeliveryStatus open={store.deliveryOpen} />
         </div>

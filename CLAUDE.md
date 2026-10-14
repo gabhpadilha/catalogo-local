@@ -14,6 +14,7 @@
 - **Componentização:** Modais e gavetas usam `components/Sheet.tsx` (`<dialog>` nativo): bottom sheet no mobile, fundo escuro com blur, e o "voltar" do celular fecha a gaveta. Estado em Context API ou estado local elevado.
 - **Custo Zero:** QUALQUER sugestão de infraestrutura, banco de dados ou hosting DEVE ser 100% gratuita (Supabase Free Tier). Atenção: o plano Hobby da Vercel proíbe uso comercial; para produção paga pelos lojistas, preferir Cloudflare Workers (OpenNext).
 - **Dados:** `lib/data.ts` lê do Supabase quando `NEXT_PUBLIC_SUPABASE_*` existe; senão usa `lib/seed.ts`. Schema e RLS em `supabase/migrations/`. Preços nunca vêm do cliente.
+- **Busca entre lojas (home):** índice em `/api/busca` (`getSearchIndex`, revalida a cada 60 s e quando o lojista salva), busca no navegador em `lib/search.ts`. Resultado abre `/{loja}?produto={id}`: a sacola continua uma por loja e a vitrine de uma loja nunca mostra outras. Buscas sem resultado vão para `search_misses` pela RPC `log_search_miss` (consulta em `supabase/queries/`). Acima de ~1.000 produtos, migrar a busca para o índice de texto do Postgres.
 
 ## 🤖 Diretrizes para o Claude Code (Skills & Agents)
 1. **Economia de Tokens:** Responde de forma extremamente concisa. Não dês tutoriais nem explicações longas. Modifica os ficheiros diretamente através das tuas tools.

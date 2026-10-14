@@ -1,8 +1,8 @@
 import { memo } from "react";
-import Image from "next/image";
 import type { Product } from "@/lib/types";
-import { formatPrice, inStock, isOnSale } from "@/lib/format";
+import { inStock } from "@/lib/format";
 import { PlusIcon } from "./icons";
+import { PriceTag, ProductImage, discountOf } from "./ProductTile";
 
 type ProductCardProps = {
   product: Product;
@@ -11,28 +11,18 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product, onSelect, onQuickAdd }: ProductCardProps) {
-  const { name, price, originalPrice, imageUrl } = product;
-  const onSale = isOnSale(product);
+  const { name } = product;
   const available = inStock(product);
-  const discount = onSale ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
   const oneOption = product.variants.filter((v) => v.inStock).length === 1;
 
   return (
     <article className="group relative flex flex-col rounded-2xl bg-white p-2 ring-1 ring-transparent hover:ring-brand-line has-[.card-link:focus-visible]:ring-2 has-[.card-link:focus-visible]:ring-brand-dark">
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-brand-soft">
-        <Image
-          src={imageUrl}
-          alt=""
-          fill
-          sizes="(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw"
-          className={`object-cover ${available ? "" : "opacity-50 grayscale"}`}
-        />
-        {!available ? (
-          <span className="absolute top-2 left-2 rounded-full bg-brand-dark text-brand-light text-xs font-medium px-2.5 py-1">Esgotado</span>
-        ) : onSale ? (
-          <span className="absolute top-2 left-2 rounded-full bg-brand-primary text-brand-light text-xs font-semibold px-2.5 py-1 tabular-nums">-{discount}%</span>
-        ) : null}
-      </div>
+      <ProductImage
+        src={product.imageUrl}
+        sizes="(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw"
+        soldOut={!available}
+        discount={discountOf(product)}
+      />
 
       <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">
         <h3 className="text-sm sm:text-[15px] font-medium leading-snug text-brand-dark line-clamp-2">
@@ -43,16 +33,7 @@ function ProductCard({ product, onSelect, onQuickAdd }: ProductCardProps) {
         </h3>
 
         <div className="mt-auto pt-2 flex items-end justify-between gap-2">
-          <p className="leading-tight">
-            {onSale && (
-              <span className="block text-xs text-brand-muted line-through tabular-nums">
-                <span className="sr-only">De </span>{formatPrice(originalPrice!)}
-              </span>
-            )}
-            <span className={`font-semibold tabular-nums ${onSale ? "text-brand-primary" : "text-brand-dark"}`}>
-              {onSale && <span className="sr-only">por </span>}{formatPrice(price)}
-            </span>
-          </p>
+          <PriceTag price={product.price} originalPrice={product.originalPrice} />
           {available && (
             <button
               type="button"

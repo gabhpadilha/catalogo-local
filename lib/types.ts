@@ -40,3 +40,21 @@ export type Store = {
 };
 
 export type StoreCatalog = { store: Store; products: Product[] };
+
+/** Loja como aparece na busca da plataforma. */
+export type SearchStore = Pick<Store, "slug" | "name" | "segment" | "logoUrl" | "theme" | "deliveryOpen">;
+
+/** Produto enxuto para a busca entre lojas (só os que têm estoque). */
+export type SearchItem = {
+  id: string;
+  name: string;
+  category: string;
+  /** Início da descrição: só entra na busca quando nome e categoria não acham nada. */
+  description: string;
+  price: number;
+  originalPrice?: number;
+  imageUrl: string;
+  store: string;
+};
+
+export type SearchIndex = { stores: SearchStore[]; items: SearchItem[] };

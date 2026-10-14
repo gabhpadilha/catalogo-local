@@ -14,10 +14,11 @@ const fail = (e: unknown): ActionState => {
   return { error: "Não foi possível salvar. Tente novamente." };
 };
 
-// Atualiza a vitrine pública e a lista de lojas na hora.
+// Atualiza a vitrine pública, a home e a busca entre lojas na hora.
 const refreshStorefront = (slug: string) => {
   revalidatePath(`/${slug}`, "layout");
   revalidatePath("/");
+  revalidatePath("/api/busca");
 };
 
 // ───────────── Login ─────────────

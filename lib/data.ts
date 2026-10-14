@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { supabase } from "./supabase/public";
 import { SEED } from "./seed";
-import type { Product, Store, StoreCatalog, StoreTheme } from "./types";
+import type { Product, SearchIndex, SearchItem, SearchStore, Store, StoreCatalog, StoreTheme } from "./types";
 
 const DEFAULT_THEME: StoreTheme = { primary: "#73030D", dark: "#0D0D0D", light: "#F2F2F2" };
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -94,4 +94,60 @@ export const getCatalog = cache(async (slug: string): Promise<StoreCatalog | nul
   if (pErr) throw pErr;
 
   return { store: toStore(store as StoreRow), products: (products as ProductRow[]).map(toProduct) };
+});
+
+const DESCRIPTION_MAX = 160;
+const PAGE = 1000;
+
+type SearchRow = {
+  id: string; name: string; description: string; category: string; price: number; original_price: number | null;
+  image_url: string | null; store_id: string; product_variants: { stock: number | null }[];
+};
+
+const toSearchStore = ({ slug, name, segment, logoUrl, theme, deliveryOpen }: Store): SearchStore => ({ slug, name, segment, logoUrl, theme, deliveryOpen });
+
+/** Produtos com estoque de todas as lojas ativas, do mais novo ao mais antigo (busca da home). */
+export const getSearchIndex = cache(async (): Promise<SearchIndex> => {
+  const stores = await getStores();
+  if (!supabase) {
+    const items = SEED.flatMap(({ store, products }) =>
+      products
+        .filter((p) => p.variants.some((v) => v.inStock))
+        .map((p): SearchItem => ({
+          id: p.id, name: p.name, category: p.category, description: p.description.slice(0, DESCRIPTION_MAX),
+          price: p.price, originalPrice: p.originalPrice, imageUrl: p.imageUrl, store: store.slug,
+        }))
+    );
+    return { stores: stores.map(toSearchStore), items };
+  }
+
+  // Em páginas: o Supabase devolve no máximo 1.000 linhas por consulta.
+  const rows: SearchRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, description, category, price, original_price, image_url, store_id, product_variants (stock)")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    rows.push(...(data as SearchRow[]));
+    if (data.length < PAGE) break;
+  }
+
+  const slugById = new Map(stores.map((s) => [s.id, s.slug]));
+  const items = rows
+    .filter((r) => slugById.has(r.store_id) && r.product_variants.some((v) => v.stock == null || v.stock > 0))
+    .map((r): SearchItem => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      description: r.description.slice(0, DESCRIPTION_MAX),
+      price: Number(r.price),
+      originalPrice: r.original_price == null ? undefined : Number(r.original_price),
+      imageUrl: r.image_url ?? "",
+      store: slugById.get(r.store_id)!,
+    }));
+  return { stores: stores.map(toSearchStore), items };
 });

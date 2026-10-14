@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { CartItem, Product } from "@/lib/types";
 import { useStore } from "./StoreProvider";
+import { cartKey } from "@/lib/storage";
 
 type Added = { id: number; name: string };
 
@@ -55,7 +56,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lastAdded, setLastAdded] = useState<Added | null>(null);
   const { store, products } = useStore();
   // Uma sacola por loja: o pedido vai para o WhatsApp de uma loja só.
-  const storageKey = `cart:${store.slug}`;
+  const storageKey = cartKey(store.slug);
 
   // Restaura a sacola do localStorage após montar (evita mismatch de hidratação).
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -65,6 +66,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (saved) setCart(restoreCart(JSON.parse(saved), products));
     } catch {}
     setHydrated(true);
+    // ?sacola=1 (aviso de sacola aberta na home): chega com a sacola aberta.
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("sacola")) {
+      url.searchParams.delete("sacola");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      setOpen(true);
+    }
   }, [storageKey, products]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
