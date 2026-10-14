@@ -47,7 +47,7 @@ export default function VariantsEditor({ initial }: { initial: Variant[] }) {
               onChange={(e) => update(i, { label: e.target.value })}
               maxLength={30}
               aria-label="Nome da opção"
-              className={`${input} flex-1 h-11`}
+              className={`${input.replace("w-full ", "")} flex-1 min-w-0 h-11`}
             />
             <button
               type="button"
@@ -78,7 +78,7 @@ export default function VariantsEditor({ initial }: { initial: Variant[] }) {
           }}
           maxLength={30}
           placeholder="Nova opção, ex.: Azul"
-          className={`${input} flex-1 h-11`}
+          className={`${input.replace("w-full ", "")} flex-1 min-w-0 h-11`}
         />
         <button type="button" onClick={add} className={ghostButton}>
           Adicionar

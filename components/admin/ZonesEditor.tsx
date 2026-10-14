@@ -17,7 +17,7 @@ export default function ZonesEditor({ initial }: { initial: Zone[] }) {
       <ul className="space-y-2 mb-3">
         {zones.map((z, i) => (
           <li key={z.id ?? `novo-${i}`} className="flex items-center gap-2">
-            <input value={z.label} onChange={(e) => update(i, { label: e.target.value })} maxLength={60} aria-label="Bairro" placeholder="Bairro" className={`${input} flex-1 h-11`} />
+            <input value={z.label} onChange={(e) => update(i, { label: e.target.value })} maxLength={60} aria-label="Bairro" placeholder="Bairro" className={`${input.replace("w-full ", "")} flex-1 min-w-0 h-11`} />
             {z.pickup ? (
               <span className="w-28 text-center text-sm font-semibold text-green-800 bg-green-100 h-11 rounded-xl flex items-center justify-center shrink-0">Retirada</span>
             ) : (
@@ -27,7 +27,7 @@ export default function ZonesEditor({ initial }: { initial: Zone[] }) {
                 inputMode="decimal"
                 aria-label={`Frete para ${z.label}`}
                 placeholder="R$"
-                className={`${input} w-28 h-11 shrink-0`}
+                className={`${input.replace("w-full ", "")} w-28 h-11 shrink-0`}
               />
             )}
             <button type="button" onClick={() => setZones((zs) => zs.filter((_, j) => j !== i))} aria-label={`Remover ${z.label}`} className="w-11 h-11 rounded-xl text-brand-muted hover:bg-gray-100 shrink-0">
