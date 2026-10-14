@@ -18,7 +18,10 @@ export default async function Home() {
       <OpenCarts stores={index.stores} />
 
       <MarketSearch title="Precisou? Chega hoje." tagline={PLATFORM.tagline} categories={topCategories(index.items)}>
-        <section aria-labelledby="lojas" className="mt-12 sm:mt-16">
+        {/* Produtos logo abaixo da busca e dos atalhos; as lojas vêm depois. */}
+        {shelf.items.length > 0 && <Shelf title={shelf.title} items={shelf.items} stores={storeBySlug} />}
+
+        <section aria-labelledby="lojas" className="mt-14 sm:mt-20">
           <div className="flex items-baseline justify-between gap-4 mb-5">
             <h2 id="lojas" className="headline font-bold text-2xl sm:text-3xl">Lojas em {PLATFORM.city}</h2>
             {stores.length > 0 && (
@@ -40,8 +43,6 @@ export default async function Home() {
             <p className="text-brand-muted">Nenhuma loja publicada ainda.</p>
           )}
         </section>
-
-        {shelf.items.length > 0 && <Shelf title={shelf.title} items={shelf.items} stores={storeBySlug} />}
       </MarketSearch>
     </main>
   );
