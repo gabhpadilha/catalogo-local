@@ -23,6 +23,7 @@ export const SEED: StoreCatalog[] = [
       instagram: "https://instagram.com/gribb.pt",
       city: "Guaratuba",
       deliveryOpen: true,
+      deliveryMode: "zones",
       theme: { primary: "#73030D", dark: "#0D0D0D", light: "#F2F2F2" },
       hero: {
         title: "ESTILO EM",
@@ -83,6 +84,7 @@ export const SEED: StoreCatalog[] = [
       whatsapp: "5500000000000",
       city: "Guaratuba",
       deliveryOpen: true,
+      deliveryMode: "zones",
       theme: { primary: "#C2410C", dark: "#1C1917", light: "#F5F5F4" },
       hero: {
         title: "PRECISOU,",

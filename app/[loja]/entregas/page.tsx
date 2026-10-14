@@ -29,14 +29,28 @@ export default async function EntregasPage({ params }: Props) {
       <h2 className="headline font-bold text-2xl mt-14 mb-4">Como funciona</h2>
       <DeliverySteps />
 
-      {store.zones.length > 0 && (
+      {store.deliveryMode === "uber" ? (
         <>
-          <h2 className="headline font-bold text-2xl mt-14 mb-4">Bairros e frete</h2>
-          <DeliveryZones zones={store.zones} />
-          <p className="text-sm text-brand-muted mt-3">
-            Valores estimados. O preço final depende da distância e da demanda do Uber no momento do pedido.
+          <h2 className="headline font-bold text-2xl mt-14 mb-4">Quanto custa o frete</h2>
+          <p className="text-brand-muted leading-relaxed">
+            O frete é cotado no Uber na hora em que você finaliza o pedido, pelo seu CEP e número. O valor aparece antes de enviar e vai junto na mensagem para a loja.
           </p>
+          {store.zones.some((z) => z.pickup) && (
+            <div className="mt-6">
+              <DeliveryZones zones={store.zones.filter((z) => z.pickup)} />
+            </div>
+          )}
         </>
+      ) : (
+        store.zones.length > 0 && (
+          <>
+            <h2 className="headline font-bold text-2xl mt-14 mb-4">Bairros e frete</h2>
+            <DeliveryZones zones={store.zones} />
+            <p className="text-sm text-brand-muted mt-3">
+              Valores estimados. O preço final depende da distância e da demanda do Uber no momento do pedido.
+            </p>
+          </>
+        )
       )}
 
       <div className="mt-14 flex flex-col sm:flex-row gap-3">

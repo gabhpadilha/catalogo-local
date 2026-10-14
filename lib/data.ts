@@ -17,7 +17,7 @@ const text = (v: unknown) => (typeof v === "string" ? v : "");
 
 type StoreRow = {
   id: string; slug: string; name: string; segment: string; tagline: string | null; whatsapp: string;
-  instagram: string | null; logo_url: string | null; city: string; address: string | null; delivery_open: boolean; theme: unknown; hero: unknown;
+  instagram: string | null; logo_url: string | null; city: string; address: string | null; delivery_open: boolean; delivery_mode: string; theme: unknown; hero: unknown;
   delivery_zones?: { id: string; label: string; fee: number; is_pickup: boolean; sort_order: number }[];
 };
 
@@ -26,7 +26,7 @@ type ProductRow = {
   image_url: string | null; product_variants: { label: string; stock: number | null; sort_order: number }[];
 };
 
-const STORE_COLUMNS = "id, slug, name, segment, tagline, whatsapp, instagram, logo_url, city, address, delivery_open, theme, hero";
+const STORE_COLUMNS = "id, slug, name, segment, tagline, whatsapp, instagram, logo_url, city, address, delivery_open, delivery_mode, theme, hero";
 
 const toStore = (r: StoreRow): Store => {
   const hero = (r.hero ?? {}) as Record<string, unknown>;
@@ -42,6 +42,7 @@ const toStore = (r: StoreRow): Store => {
     city: r.city,
     address: r.address ?? undefined,
     deliveryOpen: r.delivery_open,
+    deliveryMode: r.delivery_mode === "uber" ? "uber" : "zones",
     theme: toTheme(r.theme),
     hero: { title: text(hero.title) || r.name.toUpperCase(), highlight: text(hero.highlight), text: text(hero.text) || (r.tagline ?? ""), imageUrl: text(hero.imageUrl) || undefined },
     zones: [...(r.delivery_zones ?? [])]

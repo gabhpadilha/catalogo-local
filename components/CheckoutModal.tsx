@@ -8,12 +8,14 @@ import { CheckIcon, CloseIcon, PinIcon, WhatsAppIcon } from "./icons";
 import { formatPrice, whatsappUrl } from "@/lib/format";
 import { PLATFORM } from "@/lib/platform";
 import type { CartItem, DeliveryZone } from "@/lib/types";
+import UberDelivery, { addressLine, emptyAddress, type Coords, type DropoffAddress, type QuoteState } from "./UberDelivery";
 
 const CUSTOMER_KEY = "gribb-customer";
 const NAME_MAX = 60;
 const ADDRESS_MAX = 160;
 
-type Customer = { name: string; deliveryId: string; address: string };
+type Customer = { name: string; deliveryId: string; address: string; drop: DropoffAddress };
+const UBER = "uber"; // deliveryId de "entrega pelo Uber" (não é uma zona)
 
 // Só é montado no cliente (após interação), por isso o localStorage é seguro aqui.
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
@@ -25,25 +27,54 @@ const loadCustomer = (zones: DeliveryZone[]): Customer => {
     saved = JSON.parse(localStorage.getItem(CUSTOMER_KEY) ?? "{}") ?? {};
   } catch {}
   const deliveryId = zones.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : zones[0]?.id ?? "";
-  return { name: str(saved.name, NAME_MAX), deliveryId, address: str(saved.address, ADDRESS_MAX) };
+  const d = (saved.drop ?? {}) as Partial<Record<keyof DropoffAddress, unknown>>;
+  const drop = { cep: str(d.cep, 9), street: str(d.street, 120), number: str(d.number, 20), complement: str(d.complement, 60), neighborhood: str(d.neighborhood, 60) };
+  return { name: str(saved.name, NAME_MAX), deliveryId, address: str(saved.address, ADDRESS_MAX), drop };
 };
 
 // Uma linha só, sem espaços repetidos.
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
-const buildOrderMessage = (storeName: string, city: string, cart: CartItem[], c: Customer, subtotal: number, fee: number, deliveryLabel: string, pickup: boolean) =>
-  [
+// Como o pedido vai ser entregue, para montar a mensagem.
+type Shipping =
+  | { kind: "pickup" }
+  | { kind: "zone"; label: string; fee: number; address: string }
+  | { kind: "uber"; fee: number | null; address: string; cep: string; mapUrl: string };
+
+const shippingLines = (s: Shipping, subtotal: number, city: string) => {
+  if (s.kind === "pickup") return { fee: ["Entrega: Retirada na loja (grátis)", `*Total: ${formatPrice(subtotal)}*`], where: ["Retirada na loja"] };
+  if (s.kind === "zone") {
+    return {
+      fee: [`Frete Uber Flash (${s.label}): ~${formatPrice(s.fee)} — a confirmar`, `*Total estimado: ${formatPrice(subtotal + s.fee)}*`],
+      where: [`Endereço: ${clean(s.address)} — ${s.label}, ${city}`],
+    };
+  }
+  return {
+    fee:
+      s.fee == null
+        ? ["Frete: a combinar (o site não conseguiu cotar)", `*Total sem frete: ${formatPrice(subtotal)}*`]
+        : [`Frete Uber (cotado no site): ${formatPrice(s.fee)}`, `*Total: ${formatPrice(subtotal + s.fee)}*`],
+    where: [`Endereço: ${clean(s.address)}, ${city} - CEP ${s.cep}`, `Mapa: ${s.mapUrl}`],
+  };
+};
+
+const buildOrderMessage = (storeName: string, city: string, cart: CartItem[], name: string, subtotal: number, shipping: Shipping) => {
+  const { fee, where } = shippingLines(shipping, subtotal, city);
+  return [
     `Olá! Quero fazer este pedido na ${storeName}:`,
     "",
     ...cart.map((i) => `• ${i.quantity}x ${i.name} (${i.selectedSize}) — ${formatPrice(i.price * i.quantity)}`),
     "",
     `Subtotal: ${formatPrice(subtotal)}`,
-    pickup ? "Entrega: Retirada na loja (grátis)" : `Frete Uber Flash (${deliveryLabel}): ~${formatPrice(fee)} — a confirmar`,
-    `*Total${pickup ? "" : " estimado"}: ${formatPrice(subtotal + fee)}*`,
+    ...fee,
     "",
-    `Nome: ${clean(c.name)}`,
-    pickup ? "Retirada na loja" : `Endereço: ${clean(c.address)} — ${deliveryLabel}, ${city}`,
+    `Nome: ${clean(name)}`,
+    ...where,
   ].join("\n");
+};
+
+const mapUrl = (address: string, city: string, coords: Coords | null) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords ? `${coords.lat},${coords.lng}` : `${address}, ${city} - ${PLATFORM.state}`)}`;
 
 const inputClass =
   "w-full h-12 px-4 rounded-xl border border-brand-line bg-white text-brand-dark placeholder:text-brand-muted focus:outline-none focus:border-brand-dark/40 focus:ring-2 focus:ring-brand-dark/10 transition";
@@ -55,9 +86,17 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const { cart, total: subtotal, clearCart } = useCart();
   const { store } = useStore();
   const zones = store.zones;
+  const uber = store.deliveryMode === "uber";
   const pickupZone = zones.find((z) => z.pickup);
   const deliveryZones = zones.filter((z) => !z.pickup);
-  const [customer, setCustomer] = useState(() => loadCustomer(zones));
+  const [customer, setCustomer] = useState(() => {
+    const c = loadCustomer(zones);
+    // Loja com Uber: entrega por padrão, a menos que o cliente tenha escolhido retirada da última vez.
+    return uber && c.deliveryId !== pickupZone?.id ? { ...c, deliveryId: UBER } : c;
+  });
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [quote, setQuote] = useState<QuoteState>({ status: "idle" });
+  const setDrop = useCallback((drop: DropoffAddress) => setCustomer((c) => ({ ...c, drop })), []);
   // Bairro lembrado ao alternar entre entrega e retirada.
   const [lastDeliveryId, setLastDeliveryId] = useState(() =>
     deliveryZones.some((z) => z.id === customer.deliveryId) ? customer.deliveryId : deliveryZones[0]?.id ?? ""
@@ -65,7 +104,12 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const [sentUrl, setSentUrl] = useState<string | null>(null);
 
   const delivery: DeliveryZone = zones.find((o) => o.id === customer.deliveryId) ?? zones[0] ?? { id: "", label: "A combinar", fee: 0 };
-  const pickup = !!delivery.pickup;
+  const pickup = uber ? customer.deliveryId === pickupZone?.id : !!delivery.pickup;
+  const uberFee = quote.status === "ok" ? quote.fee : null;
+  const fee = pickup ? 0 : uber ? uberFee ?? 0 : delivery.fee;
+  const drop = customer.drop ?? emptyAddress;
+  // Com Uber, só envia depois que a cotação respondeu (com valor ou com erro, aí o frete fica a combinar).
+  const waitingQuote = uber && !pickup && (quote.status === "idle" || quote.status === "loading");
   const update = (field: keyof Customer) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setCustomer((c) => ({ ...c, [field]: e.target.value }));
   const chooseZone = (id: string) => {
@@ -76,7 +120,13 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) return;
-    const url = whatsappUrl(store.whatsapp, buildOrderMessage(store.name, store.city, cart, customer, subtotal, delivery.fee, delivery.label, pickup));
+    if (waitingQuote) return;
+    const shipping: Shipping = pickup
+      ? { kind: "pickup" }
+      : uber
+        ? { kind: "uber", fee: uberFee, address: addressLine(drop), cep: drop.cep, mapUrl: mapUrl(`${drop.street}, ${drop.number}${drop.neighborhood ? ` - ${drop.neighborhood}` : ""}`, store.city, coords) }
+        : { kind: "zone", label: delivery.label, fee: delivery.fee, address: customer.address };
+    const url = whatsappUrl(store.whatsapp, buildOrderMessage(store.name, store.city, cart, customer.name, subtotal, shipping));
     window.open(url, "_blank", "noopener,noreferrer");
     try {
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
@@ -127,12 +177,12 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
           <input id="co-name" required autoComplete="name" maxLength={NAME_MAX} placeholder="Como podemos te chamar?" value={customer.name} onChange={update("name")} className={inputClass} />
         </div>
 
-        {pickupZone && deliveryZones.length > 0 && (
+        {pickupZone && (uber || deliveryZones.length > 0) && (
           <fieldset>
             <legend className={labelClass}>Como você quer receber?</legend>
             <div className="grid grid-cols-2 gap-1 p-1 rounded-full bg-brand-soft">
               <label className={segment}>
-                <input type="radio" name="co-mode" className="sr-only" checked={!pickup} onChange={() => chooseZone(lastDeliveryId)} />
+                <input type="radio" name="co-mode" className="sr-only" checked={!pickup} onChange={() => chooseZone(uber ? UBER : lastDeliveryId)} />
                 Entrega
               </label>
               <label className={segment}>
@@ -150,6 +200,18 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
               {store.address ? <>Retire em {store.address}, {store.city}.</> : <>Retire na loja, em {store.city}.</>} O horário é combinado no WhatsApp.
             </span>
           </p>
+        ) : uber ? (
+          <UberDelivery
+            slug={store.slug}
+            value={drop}
+            onChange={setDrop}
+            coords={coords}
+            onCoords={setCoords}
+            quote={quote}
+            onQuote={setQuote}
+            inputClass={inputClass}
+            labelClass={labelClass}
+          />
         ) : (
           <>
             {deliveryZones.length > 0 && (
@@ -183,23 +245,29 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
             <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
           </div>
           <div className="flex justify-between text-brand-muted">
-            <dt>{pickup ? "Retirada na loja" : "Frete estimado (Uber Flash)"}</dt>
-            <dd className="tabular-nums">{pickup ? "Grátis" : formatPrice(delivery.fee)}</dd>
+            <dt>{pickup ? "Retirada na loja" : uber ? "Frete pelo Uber" : "Frete estimado (Uber Flash)"}</dt>
+            <dd className="tabular-nums">
+              {pickup ? "Grátis" : !uber ? formatPrice(delivery.fee) : uberFee != null ? formatPrice(uberFee) : quote.status === "loading" ? "Cotando…" : "A combinar"}
+            </dd>
           </div>
           <div className="flex justify-between items-baseline pt-2 border-t border-brand-line">
-            <dt className="font-medium text-brand-dark">{pickup ? "Total" : "Total estimado"}</dt>
-            <dd className="text-xl font-semibold text-brand-dark tabular-nums">{formatPrice(subtotal + delivery.fee)}</dd>
+            <dt className="font-medium text-brand-dark">{pickup || uberFee != null ? "Total" : uber ? "Total sem frete" : "Total estimado"}</dt>
+            <dd className="text-xl font-semibold text-brand-dark tabular-nums">{formatPrice(subtotal + fee)}</dd>
           </div>
         </dl>
         {!pickup && (
-          <p className="text-sm text-brand-muted -mt-2">O frete final é cotado no Uber na hora do pedido e confirmado no WhatsApp antes do Pix.</p>
+          <p className="text-sm text-brand-muted -mt-2">
+            {uber
+              ? "Valor cotado agora no Uber. A loja confirma no WhatsApp e chama o entregador depois do Pix."
+              : "O frete final é cotado no Uber na hora do pedido e confirmado no WhatsApp antes do Pix."}
+          </p>
         )}
       </div>
 
       <div className="shrink-0 border-t border-brand-line px-5 sm:px-8 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-6">
         <button
           type="submit"
-          disabled={cart.length === 0}
+          disabled={cart.length === 0 || waitingQuote}
           className="w-full h-13 rounded-full bg-brand-primary text-brand-light font-semibold hover:bg-brand-dark transition-colors active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
         >
           <WhatsAppIcon />

@@ -5,13 +5,18 @@ import { formatPrice } from "@/lib/format";
 import { ChevronRightIcon, TruckIcon } from "./icons";
 
 // Resumo de frete a partir das zonas cadastradas pela loja.
-function deliverySummary({ zones, deliveryOpen }: StoreCatalog["store"]) {
+function deliverySummary({ zones, deliveryOpen, deliveryMode }: StoreCatalog["store"]) {
   const fees = zones.filter((z) => !z.pickup).map((z) => z.fee);
   const pickup = zones.some((z) => z.pickup);
   if (!deliveryOpen) {
     return pickup ? "Você ainda pode pedir e combinar a retirada no WhatsApp." : "Você ainda pode pedir e combinar a entrega no WhatsApp.";
   }
-  const fee = fees.length ? `Uber Flash a partir de ${formatPrice(Math.min(...fees))}.` : "Frete combinado no WhatsApp.";
+  const fee =
+    deliveryMode === "uber"
+      ? "Frete calculado na hora pelo Uber, pelo seu endereço."
+      : fees.length
+        ? `Uber Flash a partir de ${formatPrice(Math.min(...fees))}.`
+        : "Frete combinado no WhatsApp.";
   return pickup ? `${fee} Ou retire grátis na loja.` : fee;
 }
 

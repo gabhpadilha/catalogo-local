@@ -12,6 +12,7 @@ export type AdminStore = {
   instagram: string | null;
   address: string | null;
   delivery_open: boolean;
+  delivery_mode: string;
   is_active: boolean;
   theme: { primary?: string; dark?: string; light?: string };
   hero: { title?: string; highlight?: string; text?: string; imageUrl?: string };
@@ -35,7 +36,7 @@ export type AdminProduct = {
   product_variants: AdminVariant[];
 };
 
-const STORE_COLUMNS = "id, slug, name, segment, tagline, whatsapp, instagram, address, delivery_open, is_active, theme, hero, logo_url";
+const STORE_COLUMNS = "id, slug, name, segment, tagline, whatsapp, instagram, address, delivery_open, delivery_mode, is_active, theme, hero, logo_url";
 
 /** Usuário logado (validado pelo Supabase) ou redireciona para o login. */
 export const requireUser = cache(async () => {

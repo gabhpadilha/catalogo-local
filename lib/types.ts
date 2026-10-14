@@ -20,6 +20,9 @@ export type DeliveryZone = { id: string; label: string; fee: number; pickup?: bo
 
 export type StoreTheme = { primary: string; dark: string; light: string };
 
+/** "zones": tabela por bairro. "uber": frete cotado no Uber Direct pelo endereço do cliente. */
+export type DeliveryMode = "zones" | "uber";
+
 export type StoreHero = { title: string; highlight: string; text: string; imageUrl?: string };
 
 export type Store = {
@@ -34,6 +37,7 @@ export type Store = {
   city: string;
   address?: string;
   deliveryOpen: boolean;
+  deliveryMode: DeliveryMode;
   theme: StoreTheme;
   hero: StoreHero;
   zones: DeliveryZone[];

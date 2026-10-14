@@ -172,6 +172,7 @@ export async function saveStore(slug: string, _: ActionState, form: FormData): P
       whatsapp: whatsapp(form.get("whatsapp")),
       instagram: instagram(form.get("instagram")),
       address: text(form, "address", 160) || null,
+      delivery_mode: form.get("delivery_mode") === "uber" ? "uber" : "zones",
       theme,
       hero: {
         title: text(form, "hero_title", 40),
@@ -182,8 +183,11 @@ export async function saveStore(slug: string, _: ActionState, form: FormData): P
       logo_url: storageUrl(form.get("logo_url")),
     };
 
+    if (fields.delivery_mode === "uber" && !fields.address) throw new FormError("Para cotar o frete no Uber, preencha o endereço da loja (é o ponto de coleta).");
+
     const zones = json<ZoneInput[]>(form, "zones");
-    if (!Array.isArray(zones) || zones.length === 0) throw new FormError("Cadastre pelo menos um bairro ou a retirada na loja.");
+    if (!Array.isArray(zones)) throw new FormError("Bairros inválidos.");
+    if (zones.length === 0 && fields.delivery_mode !== "uber") throw new FormError("Cadastre pelo menos um bairro ou a retirada na loja.");
     if (zones.length > 30) throw new FormError("Máximo de 30 bairros.");
     const cleanZones = zones.map((z, i) => {
       const label = String(z?.label ?? "").trim().slice(0, 60);

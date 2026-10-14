@@ -124,13 +124,34 @@ export default function StoreForm({ store, zones }: Props) {
           <input id="s-ig" name="instagram" defaultValue={store.instagram ?? ""} placeholder="@sualoja" className={input} />
         </div>
         <div>
-          <label htmlFor="s-ad" className={label}>Endereço da loja (opcional)</label>
-          <input id="s-ad" name="address" maxLength={160} defaultValue={store.address ?? ""} placeholder="Para retiradas" className={input} />
+          <label htmlFor="s-ad" className={label}>Endereço da loja</label>
+          <input id="s-ad" name="address" maxLength={160} defaultValue={store.address ?? ""} placeholder="Rua, número - bairro (coleta do Uber e retirada)" className={input} />
         </div>
       </section>
 
-      <section className={card}>
+      <section className={`${card} space-y-5`}>
+        <h2 className="headline text-xl font-bold">Frete</h2>
+        <fieldset className="space-y-2">
+          <legend className={label}>Como calcular o frete</legend>
+          <label className="flex gap-3 rounded-xl border border-brand-line p-4 cursor-pointer has-[:checked]:border-brand-dark">
+            <input type="radio" name="delivery_mode" value="zones" defaultChecked={store.delivery_mode !== "uber"} className="mt-1" />
+            <span>
+              <span className="block font-semibold">Tabela por bairro</span>
+              <span className="block text-sm text-brand-muted">Você define um valor para cada bairro. O cliente escolhe o dele.</span>
+            </span>
+          </label>
+          <label className="flex gap-3 rounded-xl border border-brand-line p-4 cursor-pointer has-[:checked]:border-brand-dark">
+            <input type="radio" name="delivery_mode" value="uber" defaultChecked={store.delivery_mode === "uber"} className="mt-1" />
+            <span>
+              <span className="block font-semibold">Cotação do Uber na hora</span>
+              <span className="block text-sm text-brand-muted">
+                O cliente informa CEP e número e vê o frete real do Uber antes de enviar o pedido. Precisa do endereço da loja preenchido acima. Você continua chamando o entregador depois do Pix.
+              </span>
+            </span>
+          </label>
+        </fieldset>
         <ZonesEditor initial={zones.map((z) => ({ id: z.id, label: z.label, fee: Number(z.fee).toFixed(2).replace(".", ","), pickup: z.is_pickup }))} />
+        <p className="text-sm text-brand-muted -mt-2">Na cotação do Uber, só a retirada na loja desta lista é usada.</p>
       </section>
 
       <FormMessage state={state} />

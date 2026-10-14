@@ -6,7 +6,7 @@
 - **Produto:** Plataforma multi-loja (marketplace + vitrine white-label) para o comércio local de Guaratuba. Cada loja tem catálogo, tema e WhatsApp próprios em `/[loja]`; `/` lista as lojas. Gribb é a loja piloto.
 - **Localização:** Guaratuba, PR. As decisões de logística e frete devem focar nesta região.
 - **Checkout:** Zero fricção. O pedido final não passa por gateway de pagamento no site. Ele é formatado e enviado diretamente para o WhatsApp do lojista para pagamento via Pix.
-- **Logística:** As entregas utilizam a API/conceito do Uber Flash/Direct. O valor do frete é dinâmico e confirmado no WhatsApp.
+- **Logística:** Cada loja escolhe o frete no painel (`stores.delivery_mode`): tabela por bairro ou cotação do Uber Direct na hora (`/api/frete` → `lib/uber.ts`, credenciais `UBER_DIRECT_*` só no servidor, conta da plataforma, só cota). O Direct entrega até ~5 km da loja. O lojista continua chamando o entregador depois do Pix; o frete vai na mensagem do WhatsApp.
 
 ## 💻 Tech Stack e Arquitetura
 - **Framework:** Next.js (App Router) com TypeScript.
