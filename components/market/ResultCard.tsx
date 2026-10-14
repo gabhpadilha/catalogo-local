@@ -9,7 +9,7 @@ export default function ResultCard({ item, store, sizes = "(min-width: 1024px) 2
   return (
     <Link
       href={`/${store.slug}?produto=${encodeURIComponent(item.id)}`}
-      className="flex flex-col h-full rounded-2xl bg-white p-2 ring-1 ring-transparent hover:ring-brand-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+      className="relative flex flex-col h-full rounded-2xl bg-white p-2 ring-1 ring-transparent hover:ring-brand-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
     >
       <ProductImage src={item.imageUrl} sizes={sizes} discount={discountOf(item)} />
       <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">
