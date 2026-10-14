@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { whatsappUrl } from "@/lib/format";
 import SearchBar from "./SearchBar";
@@ -101,11 +102,15 @@ export default function Navbar() {
             href={home}
             aria-label={`${store.name} — catálogo`}
             className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
-              isHome ? "w-10 h-10" : "h-10 px-4 gap-1.5"
+              isHome ? "w-10 h-10 overflow-hidden" : "h-10 px-4 gap-1.5"
             }`}
           >
             {isHome ? (
-              <span className="font-black text-xl tracking-tighter">{store.name.charAt(0)}</span>
+              store.logoUrl ? (
+                <Image src={store.logoUrl} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <span className="font-black text-xl tracking-tighter">{store.name.charAt(0)}</span>
+              )
             ) : (
               <>
                 {/* Ícone de Seta para Esquerda */}

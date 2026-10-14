@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Store } from "@/lib/types";
 
 export default function StoreCard({ store }: { store: Store }) {
@@ -8,11 +9,15 @@ export default function StoreCard({ store }: { store: Store }) {
       className="group flex items-center gap-5 bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-shadow focus-visible:outline-2 focus-visible:outline-brand-primary"
     >
       <div
-        className="w-20 h-20 shrink-0 rounded-[1.75rem] flex items-center justify-center text-4xl font-black group-hover:scale-105 transition-transform"
+        className="w-20 h-20 shrink-0 rounded-[1.75rem] overflow-hidden flex items-center justify-center text-4xl font-black group-hover:scale-105 transition-transform"
         style={{ background: store.theme.primary, color: store.theme.light }}
         aria-hidden="true"
       >
-        {store.name.charAt(0)}
+        {store.logoUrl ? (
+          <Image src={store.logoUrl} alt="" width={80} height={80} className="w-full h-full object-cover" />
+        ) : (
+          store.name.charAt(0)
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <span className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">{store.segment}</span>

@@ -44,8 +44,12 @@ export default function Hero({ store }: { store: Store }) {
               <div className="absolute bottom-[-10%] md:bottom-[10%] left-1/2 w-48 sm:w-80 h-5 sm:h-12 bg-black rounded-[100%] blur-xl animate-floor-shadow pointer-events-none -z-10" />
             </>
           ) : (
-            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-[2.5rem] bg-brand-primary text-brand-light flex items-center justify-center shadow-2xl rotate-3 animate-float-shoe">
-              <span className="text-8xl sm:text-9xl font-black tracking-tighter">{store.name.charAt(0)}</span>
+            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-[2.5rem] overflow-hidden bg-brand-primary text-brand-light flex items-center justify-center shadow-2xl rotate-3 animate-float-shoe">
+              {store.logoUrl ? (
+                <Image src={store.logoUrl} alt={store.name} width={320} height={320} preload className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-8xl sm:text-9xl font-black tracking-tighter">{store.name.charAt(0)}</span>
+              )}
             </div>
           )}
         </div>

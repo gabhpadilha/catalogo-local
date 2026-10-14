@@ -30,6 +30,7 @@ export type Store = {
   tagline: string;
   whatsapp: string;
   instagram?: string;
+  logoUrl?: string;
   city: string;
   address?: string;
   deliveryOpen: boolean;
