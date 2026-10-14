@@ -7,6 +7,7 @@ import Sheet, { SheetIconButton } from "./Sheet";
 import { CheckIcon, CloseIcon, PinIcon, WhatsAppIcon } from "./icons";
 import { formatPrice, whatsappUrl } from "@/lib/format";
 import { PLATFORM } from "@/lib/platform";
+import { logStoreEvent } from "@/lib/events";
 import type { CartItem, DeliveryZone } from "@/lib/types";
 import UberDelivery, { addressLine, emptyAddress, type Coords, type DropoffAddress, type QuoteState } from "./UberDelivery";
 
@@ -128,6 +129,7 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
         : { kind: "zone", label: delivery.label, fee: delivery.fee, address: customer.address };
     const url = whatsappUrl(store.whatsapp, buildOrderMessage(store.name, store.city, cart, customer.name, subtotal, shipping));
     window.open(url, "_blank", "noopener,noreferrer");
+    logStoreEvent(store.slug, "order", subtotal + fee);
     try {
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
     } catch {}

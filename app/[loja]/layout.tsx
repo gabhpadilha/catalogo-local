@@ -6,6 +6,7 @@ import CartButton from "@/components/CartButton";
 import CartDrawer from "@/components/CartDrawer";
 import CartToast from "@/components/CartToast";
 import CheckoutModal from "@/components/CheckoutModal";
+import VisitTracker from "@/components/VisitTracker";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/components/CartProvider";
 import { SearchProvider } from "@/components/SearchProvider";
@@ -57,6 +58,7 @@ export default async function StoreLayout({ params, children }: Props & { childr
             <CartToast />
             <CartDrawer />
             <CheckoutModal />
+            <VisitTracker slug={catalog.store.slug} />
           </SearchProvider>
         </CartProvider>
       </StoreProvider>

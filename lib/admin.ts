@@ -99,3 +99,33 @@ export const getAdminZones = async (slug: string) => {
   if (error) throw error;
   return data as AdminZone[];
 };
+
+export type StoreStats = { todayOrders: number; todayTotal: number; weekOrders: number; weekTotal: number; weekVisits: number };
+
+// Data no fuso de Guaratuba (os eventos são gravados assim pelo banco).
+const spDate = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+/** Pedidos enviados e visitas dos últimos 7 dias (o lojista só lê as métricas da própria loja). */
+export const getStoreStats = async (slug: string): Promise<StoreStats> => {
+  const { supabase, store } = await requireStore(slug);
+  const today = spDate(new Date());
+  const weekStart = spDate(new Date(Date.now() - 6 * 86_400_000));
+  const { data, error } = await supabase
+    .from("store_events")
+    .select("day, kind, hits, total")
+    .eq("store_id", store.id)
+    .gte("day", weekStart);
+  if (error) throw error;
+  const stats: StoreStats = { todayOrders: 0, todayTotal: 0, weekOrders: 0, weekTotal: 0, weekVisits: 0 };
+  for (const e of data as { day: string; kind: string; hits: number; total: number }[]) {
+    if (e.kind === "visit") stats.weekVisits += e.hits;
+    if (e.kind !== "order") continue;
+    stats.weekOrders += e.hits;
+    stats.weekTotal += Number(e.total);
+    if (e.day === today) {
+      stats.todayOrders += e.hits;
+      stats.todayTotal += Number(e.total);
+    }
+  }
+  return stats;
+};

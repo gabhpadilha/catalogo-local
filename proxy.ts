@@ -27,9 +27,11 @@ export async function proxy(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getClaims();
-  const isLogin = request.nextUrl.pathname === "/admin/login";
+  const { pathname } = request.nextUrl;
+  // Login e a demonstração do painel são abertos.
+  const isPublic = pathname === "/admin/login" || pathname === "/admin/demo";
 
-  if (!data?.claims && !isLogin) {
+  if (!data?.claims && !isPublic) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
   return response;

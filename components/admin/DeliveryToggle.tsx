@@ -1,35 +1,42 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { setDeliveryOpen } from "@/app/admin/actions";
+import Switch from "./Switch";
+import { card } from "./ui";
 
-export default function DeliveryToggle({ slug, open }: { slug: string; open: boolean }) {
+export default function DeliveryToggle({ slug, open, demo = false }: { slug: string; open: boolean; demo?: boolean }) {
   const [pending, start] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic(open);
+  const [demoOpen, setDemoOpen] = useState(open);
+  const on = demo ? demoOpen : optimistic;
 
   return (
     <button
       type="button"
       role="switch"
-      aria-checked={optimistic}
+      aria-checked={on}
       disabled={pending}
       onClick={() =>
-        start(async () => {
-          setOptimistic(!optimistic);
-          await setDeliveryOpen(slug, !optimistic);
-        })
+        demo
+          ? setDemoOpen(!on)
+          : start(async () => {
+              setOptimistic(!on);
+              await setDeliveryOpen(slug, !on);
+            })
       }
-      className={`w-full flex items-center justify-between gap-4 rounded-[2rem] p-5 text-left transition-colors ${
-        optimistic ? "bg-green-600 text-white" : "bg-gray-200 text-brand-dark"
-      }`}
+      className={`${card} w-full flex items-center justify-between gap-4 text-left`}
     >
       <span>
-        <span className="block text-lg font-semibold">{optimistic ? "Entregando hoje" : "Entregas pausadas"}</span>
-        <span className="block text-sm opacity-80">Toque para {optimistic ? "pausar" : "voltar a entregar"}.</span>
+        <span className="flex items-center gap-2 font-semibold">
+          <span className={`w-2.5 h-2.5 rounded-full ${on ? "bg-emerald-500" : "bg-brand-muted"}`} aria-hidden="true" />
+          {on ? "Entregando hoje" : "Entregas pausadas"}
+        </span>
+        <span>
+          <span className="block text-sm text-brand-muted mt-0.5">{on ? "Toque para pausar (ex.: sem entregador hoje)." : "Toque para voltar a entregar."}</span>
+        </span>
       </span>
-      <span className={`w-14 h-8 rounded-full p-1 transition-colors shrink-0 ${optimistic ? "bg-white/30" : "bg-gray-400"}`}>
-        <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${optimistic ? "translate-x-6" : ""}`} />
-      </span>
+      <Switch on={on} />
     </button>
   );
 }

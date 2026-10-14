@@ -53,6 +53,9 @@ export default function SobrePage() {
           >
             Quero vender aqui
           </a>
+          <Link href="/admin/demo" className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white ring-1 ring-brand-line font-semibold text-sm hover:ring-brand-dark/30">
+            Ver o painel por dentro
+          </Link>
           <Link href="/admin" className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white ring-1 ring-brand-line font-semibold text-sm hover:ring-brand-dark/30">
             Já sou lojista: entrar no painel
           </Link>
