@@ -6,6 +6,7 @@ const LINKS = [
   { text: "Como funciona", href: "/como-funciona" },
   { text: "Sobre", href: "/sobre" },
   { text: "Área do lojista", href: "/admin" },
+  { text: "Créditos das fotos", href: "/creditos" },
 ];
 
 export default function PlatformFooter() {
