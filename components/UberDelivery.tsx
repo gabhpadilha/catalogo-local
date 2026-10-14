@@ -35,8 +35,13 @@ type Props = {
 // Endereço do cliente + cotação do Uber na hora (a cada mudança, com uma pequena espera).
 export default function UberDelivery({ slug, value, onChange, coords, onCoords, quote, onQuote, inputClass, labelClass }: Props) {
   const [cepStatus, setCepStatus] = useState<"" | "loading" | "notfound">("");
-  const [gps, setGps] = useState<"" | "loading" | "denied">("");
+  const [gps, setGps] = useState<"" | "loading" | "denied" | "filled">("");
   const lastCep = useRef("");
+  const numberRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  });
   const set = (field: keyof DropoffAddress) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [field]: field === "cep" ? maskCep(e.target.value) : e.target.value });
 
@@ -89,9 +94,28 @@ export default function UberDelivery({ slug, value, onChange, coords, onCoords, 
     if (!navigator.geolocation) return setGps("denied");
     setGps("loading");
     navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setGps("");
-        onCoords({ lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)) });
+      async (p) => {
+        const c = { lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)) };
+        onCoords(c);
+        // Preenche CEP, rua e bairro pelo mapa; o número quase nunca vem, então o foco vai para ele.
+        try {
+          const r = await fetch(`/api/endereco?lat=${c.lat}&lng=${c.lng}`);
+          const d = (await r.json()) as Partial<DropoffAddress> & { error?: string };
+          if (!r.ok || !d.street) return setGps("denied");
+          const current = valueRef.current;
+          lastCep.current = (d.cep ?? "").replace(/\D/g, ""); // não deixa o ViaCEP sobrescrever o que veio do mapa
+          onChange({
+            ...current,
+            cep: d.cep ?? current.cep,
+            street: d.street,
+            neighborhood: d.neighborhood || current.neighborhood,
+            number: current.number || d.number || "",
+          });
+          setGps("filled");
+          if (!current.number && !d.number) numberRef.current?.focus();
+        } catch {
+          setGps("denied");
+        }
       },
       () => setGps("denied"),
       { enableHighAccuracy: true, timeout: 10_000 }
@@ -116,6 +140,11 @@ export default function UberDelivery({ slug, value, onChange, coords, onCoords, 
       </div>
       {cepStatus === "notfound" && <p className="text-sm text-red-700 -mt-2">CEP não encontrado. Confira os números.</p>}
       {gps === "denied" && <p className="text-sm text-brand-muted -mt-2">Não foi possível usar a localização. Preencha o endereço.</p>}
+      {gps === "filled" && (
+        <p className="text-sm text-brand-dark -mt-2">
+          Endereço preenchido pela sua localização. {value.number ? "Confira os dados." : "Só falta o número."}
+        </p>
+      )}
 
       <div>
         <label htmlFor="co-street" className={labelClass}>Rua</label>
@@ -124,7 +153,7 @@ export default function UberDelivery({ slug, value, onChange, coords, onCoords, 
       <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
         <div>
           <label htmlFor="co-number" className={labelClass}>Número</label>
-          <input id="co-number" required inputMode="numeric" maxLength={20} value={value.number} onChange={set("number")} className={inputClass} />
+          <input id="co-number" ref={numberRef} required inputMode="numeric" maxLength={20} value={value.number} onChange={set("number")} className={inputClass} />
         </div>
         <div>
           <label htmlFor="co-comp" className={labelClass}>Complemento</label>
