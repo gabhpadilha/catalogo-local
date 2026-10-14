@@ -6,6 +6,7 @@ import { useStore } from "./StoreProvider";
 import Sheet, { SheetIconButton } from "./Sheet";
 import { CheckIcon, CloseIcon, PinIcon, WhatsAppIcon } from "./icons";
 import { formatPrice, whatsappUrl } from "@/lib/format";
+import { PLATFORM } from "@/lib/platform";
 import type { CartItem, DeliveryZone } from "@/lib/types";
 
 const CUSTOMER_KEY = "gribb-customer";
@@ -168,6 +169,12 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
               <input id="co-address" required autoComplete="street-address" maxLength={ADDRESS_MAX} placeholder="Rua, número e complemento" value={customer.address} onChange={update("address")} className={inputClass} />
             </div>
           </>
+        )}
+
+        {PLATFORM.demo && (
+          <p role="note" className="rounded-2xl bg-amber-100 text-amber-950 text-sm p-4">
+            <strong className="font-semibold">Demonstração.</strong> Esta loja é fictícia: o pedido vai para um número de teste e não será atendido.
+          </p>
         )}
 
         <dl className="rounded-2xl border border-brand-line p-4 space-y-2 text-sm">
