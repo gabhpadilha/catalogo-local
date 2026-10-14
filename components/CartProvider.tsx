@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { CartItem, Product } from "@/lib/types";
 import { useStore } from "./StoreProvider";
 
+type Added = { id: number; name: string };
 
 type CartContextValue = {
   cart: CartItem[];
@@ -17,6 +18,9 @@ type CartContextValue = {
   addItem: (product: Product, size: string) => void;
   updateQuantity: (id: string, size: string, delta: number) => void;
   removeItem: (id: string, size: string) => void;
+  /** Último produto adicionado, para o aviso de confirmação. */
+  lastAdded: Added | null;
+  dismissAdded: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -48,6 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setOpen] = useState(false);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [lastAdded, setLastAdded] = useState<Added | null>(null);
   const { store, products } = useStore();
   // Uma sacola por loja: o pedido vai para o WhatsApp de uma loja só.
   const storageKey = `cart:${store.slug}`;
@@ -78,6 +83,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ? prev.map((i) => (sameItem(i, product.id, size) ? { ...i, quantity: Math.min(i.quantity + 1, MAX_QTY) } : i))
         : [...prev, { ...product, quantity: 1, selectedSize: size }]
     );
+    setLastAdded({ id: Date.now(), name: product.name });
   }, []);
 
   const updateQuantity = useCallback((id: string, size: string, delta: number) => {
@@ -93,6 +99,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearCart = useCallback(() => setCart([]), []);
+  const dismissAdded = useCallback(() => setLastAdded(null), []);
 
   const value = useMemo(() => {
     let count = 0;
@@ -103,9 +110,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
     return {
       cart, count, total, isOpen, setOpen, isCheckoutOpen, setCheckoutOpen,
-      clearCart, addItem, updateQuantity, removeItem,
+      clearCart, addItem, updateQuantity, removeItem, lastAdded, dismissAdded,
     };
-  }, [cart, isOpen, isCheckoutOpen, clearCart, addItem, updateQuantity, removeItem]);
+  }, [cart, isOpen, isCheckoutOpen, clearCart, addItem, updateQuantity, removeItem, lastAdded, dismissAdded]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

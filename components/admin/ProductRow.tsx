@@ -21,10 +21,10 @@ export default function ProductRow({ slug, product }: { slug: string; product: A
         </div>
         <div className="min-w-0">
           <p className="font-bold leading-tight truncate">{product.name}</p>
-          <p className="text-sm font-black text-brand-primary">{formatPrice(product.price)}</p>
+          <p className="text-sm font-semibold text-brand-primary tabular-nums">{formatPrice(product.price)}</p>
           <div className="flex gap-1.5 mt-1">
-            {!product.is_active && <span className="text-[10px] font-black uppercase bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Oculto</span>}
-            {!inStock && <span className="text-[10px] font-black uppercase bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Esgotado</span>}
+            {!product.is_active && <span className="text-xs font-medium bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Oculto</span>}
+            {!inStock && <span className="text-xs font-medium bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Esgotado</span>}
           </div>
         </div>
       </Link>

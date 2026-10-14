@@ -1,37 +1,135 @@
 @import "tailwindcss";
 
+/* Identidade da plataforma. Dentro de /[loja] estas três cores vêm do tema da loja. */
 @theme {
-  /* Sua paleta de cores personalizada */
-  --color-brand-primary: #73030D;
-  --color-brand-secondary: #732F3B;
-  --color-brand-light: #F2F2F2;
-  --color-brand-muted: #8C8C8C;
-  --color-brand-dark: #0D0D0D;
-}
-@theme {
-  --animate-float-shoe: float 6s ease-in-out infinite;
-  --animate-floor-shadow: shadow-pulse 6s ease-in-out infinite;
-  --animate-search-in: search-in 0.2s ease-out;
+  --color-brand-primary: #0B6E5F;
+  --color-brand-dark: #10201D;
+  --color-brand-light: #F3F5F4;
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
-    50% { transform: translateY(-15px) rotate(1deg) scale(1.02); }
+  --animate-toast-in: toast-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-search-in: search-in 0.15s ease-out;
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(0.75rem); }
+    to { opacity: 1; transform: translateY(0); }
   }
   @keyframes search-in {
-    from { opacity: 0; transform: scaleX(0.96); }
-    to { opacity: 1; transform: scaleX(1); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-  @keyframes shadow-pulse {
-    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.35; }
-    50% { transform: translateX(-50%) scale(0.85); opacity: 0.2; }
-  }
+}
+
+/* Tons derivados. "inline" faz o var() resolver no elemento, então acompanham o tema de cada loja. */
+@theme inline {
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --color-brand-muted: color-mix(in oklab, var(--color-brand-dark) 60%, var(--color-brand-light));
+  --color-brand-line: color-mix(in oklab, var(--color-brand-dark) 11%, transparent);
+  --color-brand-soft: color-mix(in oklab, var(--color-brand-dark) 4%, var(--color-brand-light));
+  --color-brand-tint: color-mix(in oklab, var(--color-brand-primary) 9%, white);
+}
+
+/* Títulos: Archivo semi-expandida. */
+@utility headline {
+  font-stretch: 112.5%;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+/* Trava o fundo enquanto uma gaveta está aberta. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/*
+ * Gavetas e modais (<dialog> nativo, ver components/Sheet.tsx).
+ * Mobile: bottom sheet. A partir de 640px: centralizado (.sheet-center) ou lateral (.sheet-right).
+ */
+@layer components {
+  .sheet {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    padding: 0;
+    border: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    background: white;
+    color: var(--color-brand-dark);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    translate: 0 100%;
+    transition:
+      translate 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.35s,
+      display 0.35s allow-discrete,
+      overlay 0.35s allow-discrete;
+  }
+  .sheet[open] {
+    display: flex;
+    flex-direction: column;
+    translate: 0 0;
+  }
+  @starting-style {
+    .sheet[open] { translate: 0 100%; }
+  }
+
+  .sheet::backdrop {
+    background: rgb(0 0 0 / 0);
+    backdrop-filter: blur(0);
+    transition:
+      background 0.35s,
+      backdrop-filter 0.35s,
+      display 0.35s allow-discrete,
+      overlay 0.35s allow-discrete;
+  }
+  .sheet[open]::backdrop {
+    background: rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(4px);
+  }
+  @starting-style {
+    .sheet[open]::backdrop { background: rgb(0 0 0 / 0); backdrop-filter: blur(0); }
+  }
+
+  @media (min-width: 640px) {
+    .sheet-center {
+      margin: auto;
+      width: min(calc(100% - 2rem), var(--sheet-width, 32rem));
+      max-height: min(90dvh, 52rem);
+      border-radius: 1.5rem;
+      translate: 0 1rem;
+      opacity: 0;
+    }
+    .sheet-center[open] { translate: 0 0; opacity: 1; }
+    @starting-style {
+      .sheet-center[open] { translate: 0 1rem; opacity: 0; }
+    }
+
+    .sheet-right {
+      margin: 0 0 0 auto;
+      width: 26rem;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 1.5rem 0 0 1.5rem;
+      translate: 100% 0;
+    }
+    .sheet-right[open] { translate: 0 0; }
+    @starting-style {
+      .sheet-right[open] { translate: 100% 0; }
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .animate-float-shoe, .animate-floor-shadow { animation: none; }
+  .sheet, .sheet::backdrop { transition: none; }
 }

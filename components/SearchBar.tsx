@@ -3,71 +3,103 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSearch } from "./SearchProvider";
-
-const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className} aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-  </svg>
-);
+import { CloseIcon, SearchIcon } from "./icons";
 
 const scrollToCatalog = () => {
   const el = document.getElementById("catalogo");
-  if (el && el.getBoundingClientRect().top > 120) el.scrollIntoView({ behavior: "smooth" });
+  if (el && el.getBoundingClientRect().top > 160) el.scrollIntoView({ behavior: "smooth" });
 };
 
-// Botão de lupa que expande um campo sobre a própria Navbar (não altera o layout).
-export default function SearchBar({ home, onOpen }: { home: string; onOpen?: () => void }) {
+// Ao começar a digitar, leva até o catálogo (ou volta para ele vindo de outra página da loja).
+function useCatalogSearch(home: string) {
   const { query, setQuery } = useSearch();
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
-
-  const openSearch = () => {
-    onOpen?.();
-    setOpen(true);
-  };
-
-  const close = () => {
-    setQuery("");
-    setOpen(false);
-  };
-
-  const handleChange = (value: string) => {
+  const change = (value: string) => {
     if (!query && value) {
       if (pathname === home) scrollToCatalog();
       else router.push(`${home}#catalogo`);
     }
     setQuery(value);
   };
+  return { query, setQuery, change };
+}
+
+const inputBase =
+  "w-full text-brand-dark placeholder:text-brand-muted focus:outline-none [&::-webkit-search-cancel-button]:hidden";
+
+/** Campo sempre visível (desktop). */
+export function SearchField({ home, placeholder }: { home: string; placeholder: string }) {
+  const { query, setQuery, change } = useCatalogSearch(home);
+  return (
+    <div role="search" className="relative">
+      <SearchIcon className="w-[18px] h-[18px] absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none" />
+      <input
+        type="search"
+        enterKeyHint="search"
+        placeholder={placeholder}
+        aria-label="Buscar produtos"
+        value={query}
+        onChange={(e) => change(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setQuery("");
+          if (e.key === "Enter") scrollToCatalog();
+        }}
+        className={`${inputBase} h-11 pl-11 pr-10 rounded-full bg-brand-soft border border-transparent focus:bg-white focus:border-brand-line focus:ring-2 focus:ring-brand-dark/10 transition-colors`}
+      />
+      {query && (
+        <button
+          type="button"
+          onClick={() => setQuery("")}
+          aria-label="Limpar busca"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 grid place-items-center w-8 h-8 rounded-full text-brand-muted hover:text-brand-dark hover:bg-brand-soft"
+        >
+          <CloseIcon className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Lupa que abre o campo por cima do cabeçalho (mobile). */
+export function SearchToggle({ home, placeholder }: { home: string; placeholder: string }) {
+  const { query, setQuery, change } = useCatalogSearch(home);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  const close = () => {
+    setQuery("");
+    setOpen(false);
+  };
 
   return (
     <>
       <button
         type="button"
-        onClick={openSearch}
-        aria-label="Pesquisar produtos"
+        onClick={() => setOpen(true)}
+        aria-label="Buscar produtos"
         aria-expanded={open}
-        className="flex items-center justify-center w-10 h-10 rounded-full text-brand-light hover:bg-[#2A2A2A] transition-colors shrink-0"
+        className="grid place-items-center w-10 h-10 rounded-full text-brand-dark hover:bg-brand-soft transition-colors"
       >
         <SearchIcon />
       </button>
 
       {open && (
-        <div role="search" className="absolute inset-0 z-30 flex items-center gap-2 bg-brand-dark rounded-full pl-5 pr-2 animate-search-in">
+        <div role="search" className="absolute inset-0 z-10 flex items-center gap-2 bg-white px-4 animate-search-in">
           <SearchIcon className="w-5 h-5 text-brand-muted shrink-0" />
           <input
             ref={inputRef}
             type="search"
             enterKeyHint="search"
-            placeholder="Pesquisar na vitrine..."
-            aria-label="Pesquisar produtos"
+            placeholder={placeholder}
+            aria-label="Buscar produtos"
             value={query}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={(e) => change(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Escape") close();
               if (e.key === "Enter") {
@@ -75,17 +107,15 @@ export default function SearchBar({ home, onOpen }: { home: string; onOpen?: () 
                 scrollToCatalog();
               }
             }}
-            className="flex-1 min-w-0 h-10 bg-transparent text-brand-light placeholder:text-brand-muted font-medium focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className={`${inputBase} flex-1 min-w-0 h-11 text-base bg-transparent`}
           />
           <button
             type="button"
             onClick={close}
-            aria-label="Fechar pesquisa"
-            className="flex items-center justify-center w-10 h-10 rounded-full text-brand-light hover:bg-[#2A2A2A] transition-colors shrink-0"
+            aria-label="Fechar busca"
+            className="grid place-items-center w-10 h-10 rounded-full text-brand-dark hover:bg-brand-soft shrink-0"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
+            <CloseIcon />
           </button>
         </div>
       )}

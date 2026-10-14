@@ -1,32 +1,29 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Store } from "@/lib/types";
+import StoreMark from "./StoreMark";
+import DeliveryStatus from "./DeliveryStatus";
 
-export default function StoreCard({ store }: { store: Store }) {
+// Capa na cor da loja: cada vitrine traz a própria identidade para a lista.
+export default function StoreCard({ store, eager = false }: { store: Store; eager?: boolean }) {
+  const { theme, hero } = store;
   return (
     <Link
       href={`/${store.slug}`}
-      className="group flex items-center gap-5 bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-shadow focus-visible:outline-2 focus-visible:outline-brand-primary"
+      className="group flex flex-col h-full rounded-2xl bg-white p-2 ring-1 ring-brand-line hover:ring-brand-dark/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
     >
-      <div
-        className="w-20 h-20 shrink-0 rounded-[1.75rem] overflow-hidden flex items-center justify-center text-4xl font-black group-hover:scale-105 transition-transform"
-        style={{ background: store.theme.primary, color: store.theme.light }}
-        aria-hidden="true"
-      >
-        {store.logoUrl ? (
-          <Image src={store.logoUrl} alt="" width={80} height={80} className="w-full h-full object-cover" />
+      <div className="relative aspect-[16/9] rounded-xl overflow-hidden grid place-items-center" style={{ background: theme.primary }}>
+        {hero.imageUrl ? (
+          <Image src={hero.imageUrl} alt="" fill loading={eager ? "eager" : undefined} sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw" className="object-contain p-3 drop-shadow-[0_10px_10px_rgba(0,0,0,0.2)]" />
         ) : (
-          store.name.charAt(0)
+          <StoreMark store={store} size={72} />
         )}
       </div>
-      <div className="min-w-0 flex-1">
-        <span className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">{store.segment}</span>
-        <h3 className="text-xl font-black text-brand-dark leading-tight truncate">{store.name}</h3>
-        <p className="text-sm text-brand-muted line-clamp-2">{store.tagline}</p>
-        <span className={`inline-flex items-center gap-1.5 mt-2 text-[11px] font-bold ${store.deliveryOpen ? "text-green-700" : "text-brand-muted"}`}>
-          <span className={`w-2 h-2 rounded-full ${store.deliveryOpen ? "bg-green-500" : "bg-gray-400"}`} />
-          {store.deliveryOpen ? "Entregando hoje" : "Entregas pausadas"}
-        </span>
+      <div className="flex flex-1 flex-col px-2 pt-4 pb-2">
+        <h3 className="font-semibold text-lg leading-tight truncate">{store.name}</h3>
+        <p className="mt-1 text-sm text-brand-muted">{store.segment}</p>
+        {store.tagline && <p className="mt-3 text-sm text-brand-dark line-clamp-2">{store.tagline}</p>}
+        <DeliveryStatus open={store.deliveryOpen} className={`mt-auto pt-4 text-xs font-medium ${store.deliveryOpen ? "text-emerald-700" : "text-brand-muted"}`} />
       </div>
     </Link>
   );

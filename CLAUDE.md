@@ -10,8 +10,8 @@
 
 ## 💻 Tech Stack e Arquitetura
 - **Framework:** Next.js (App Router) com TypeScript.
-- **Estilização:** Tailwind CSS (estética clean, premium, bordas super arredondadas `rounded-[2.5rem]`, foco em `brand-dark` e `brand-primary`).
-- **Componentização:** Modais e gavetas (Drawers) devem usar a Context API ou estado local elevado, sempre com fundos `backdrop-blur` escuros e comportamento de "bottom sheet" no mobile.
+- **Estilização:** Tailwind CSS v4, identidade minimalista. Fonte Archivo; títulos com a utility `headline` (semi-expandida), em caixa normal (sem rótulos em CAIXA ALTA). Superfícies brancas sobre `brand-light`, sem sombra em cards. Raios por hierarquia: pílulas e botões `rounded-full`, imagens `rounded-xl`, cards `rounded-2xl`, hero e gavetas `rounded-3xl`. Cores: `brand-primary/dark/light` vêm do tema da loja; `brand-muted/line/soft/tint` são derivadas delas em `globals.css` (não use hex fixo nem `gray-*` na vitrine).
+- **Componentização:** Modais e gavetas usam `components/Sheet.tsx` (`<dialog>` nativo): bottom sheet no mobile, fundo escuro com blur, e o "voltar" do celular fecha a gaveta. Estado em Context API ou estado local elevado.
 - **Custo Zero:** QUALQUER sugestão de infraestrutura, banco de dados ou hosting DEVE ser 100% gratuita (Supabase Free Tier). Atenção: o plano Hobby da Vercel proíbe uso comercial; para produção paga pelos lojistas, preferir Cloudflare Workers (OpenNext).
 - **Dados:** `lib/data.ts` lê do Supabase quando `NEXT_PUBLIC_SUPABASE_*` existe; senão usa `lib/seed.ts`. Schema e RLS em `supabase/migrations/`. Preços nunca vêm do cliente.
 

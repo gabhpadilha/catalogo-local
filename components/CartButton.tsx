@@ -1,35 +1,31 @@
 "use client";
 
 import { useCart } from "./CartProvider";
-import BagIcon from "./BagIcon";
+import { BagIcon } from "./icons";
 import { formatPrice } from "@/lib/format";
 
+// Atalho da sacola ao alcance do polegar (no desktop a sacola fica no cabeçalho).
 export default function CartButton() {
   const { count, total, setOpen } = useCart();
   if (count === 0) return null;
 
   return (
-    <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-0 w-full px-4 z-40 flex justify-center pointer-events-none">
+    <div className="md:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-0 px-4 z-40 flex justify-center pointer-events-none">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pointer-events-auto w-full max-w-md bg-brand-primary text-white px-6 py-4 rounded-full shadow-[0_10px_40px_rgba(115,3,13,0.4)] hover:bg-brand-dark transition-all active:scale-95 flex items-center justify-between group"
+        className="pointer-events-auto w-full max-w-md h-14 pl-5 pr-6 rounded-full bg-brand-primary text-brand-light shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] active:scale-[0.98] transition-transform flex items-center justify-between"
       >
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <span className="flex items-center gap-3 font-semibold">
+          <span className="relative">
             <BagIcon />
-            <span className="absolute -top-2 -right-2 bg-brand-dark text-white text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-brand-primary">
+            <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-brand-light text-brand-primary text-[11px] font-bold tabular-nums">
               {count}
             </span>
-          </div>
-          <span className="font-bold text-lg">Ver Sacola</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-black text-lg tracking-tight">{formatPrice(total)}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-5 h-5 group-hover:translate-x-1 transition-transform">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
-        </div>
+          </span>
+          Ver sacola
+        </span>
+        <span className="font-semibold tabular-nums">{formatPrice(total)}</span>
       </button>
     </div>
   );

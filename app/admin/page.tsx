@@ -17,8 +17,8 @@ export default async function AdminHome() {
           {stores.map((s) => (
             <li key={s.id}>
               <Link href={`/admin/${s.slug}`} className="block bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 hover:shadow-md">
-                <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">{s.segment}</span>
-                <span className="block text-xl font-black">{s.name}</span>
+                <span className="text-sm text-brand-muted">{s.segment}</span>
+                <span className="block headline text-xl font-bold">{s.name}</span>
               </Link>
             </li>
           ))}

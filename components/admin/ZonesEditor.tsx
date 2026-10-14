@@ -19,7 +19,7 @@ export default function ZonesEditor({ initial }: { initial: Zone[] }) {
           <li key={z.id ?? `novo-${i}`} className="flex items-center gap-2">
             <input value={z.label} onChange={(e) => update(i, { label: e.target.value })} maxLength={60} aria-label="Bairro" placeholder="Bairro" className={`${input} flex-1 h-11`} />
             {z.pickup ? (
-              <span className="w-28 text-center text-xs font-black uppercase text-green-800 bg-green-100 h-11 rounded-xl flex items-center justify-center shrink-0">Retirada</span>
+              <span className="w-28 text-center text-sm font-semibold text-green-800 bg-green-100 h-11 rounded-xl flex items-center justify-center shrink-0">Retirada</span>
             ) : (
               <input
                 value={z.fee}

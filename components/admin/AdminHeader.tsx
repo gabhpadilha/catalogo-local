@@ -13,7 +13,7 @@ export default function AdminHeader({ back, title, subtitle }: Props) {
             ← {back.label}
           </Link>
         ) : (
-          <span className="font-black tracking-tight">{PLATFORM.name} · Painel</span>
+          <span className="headline font-bold">{PLATFORM.name} · Painel</span>
         )}
         <form action={logout}>
           <button type="submit" className="h-10 px-4 rounded-full text-sm font-bold text-brand-muted hover:text-brand-dark hover:bg-white">
@@ -21,7 +21,7 @@ export default function AdminHeader({ back, title, subtitle }: Props) {
           </button>
         </form>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-black tracking-tighter leading-tight">{title}</h1>
+      <h1 className="headline text-3xl sm:text-4xl font-bold leading-tight">{title}</h1>
       {subtitle && <p className="text-brand-muted font-medium mt-1">{subtitle}</p>}
     </header>
   );

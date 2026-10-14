@@ -5,9 +5,10 @@ type FilterPillsProps = {
   onChange: (option: string) => void;
 };
 
+// Uma linha só: rola na horizontal no mobile em vez de quebrar em várias linhas.
 export default function FilterPills({ options, active, highlight, onChange }: FilterPillsProps) {
   return (
-    <div className="flex flex-wrap gap-2.5 mb-10 justify-center md:justify-start">
+    <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
       {options.map((option) => {
         const isActive = active === option;
         return (
@@ -16,10 +17,10 @@ export default function FilterPills({ options, active, highlight, onChange }: Fi
             type="button"
             aria-pressed={isActive}
             onClick={() => onChange(option)}
-            className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 ${
+            className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark ${
               isActive
-                ? `${option === highlight ? "bg-brand-primary" : "bg-brand-dark"} text-brand-light shadow-md`
-                : "bg-white text-brand-muted border border-gray-200 hover:border-brand-dark hover:text-brand-dark"
+                ? "bg-brand-dark border-brand-dark text-brand-light"
+                : `bg-white border-brand-line hover:border-brand-dark/40 ${option === highlight ? "text-brand-primary" : "text-brand-dark"}`
             }`}
           >
             {option}

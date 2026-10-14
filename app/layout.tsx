@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import { PLATFORM } from "@/lib/platform";
+
+// Variável com eixo de largura: texto normal e títulos semi-expandidos com um arquivo só.
+const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-archivo", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: PLATFORM.name, template: `%s | ${PLATFORM.name}` },
@@ -8,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0D0D0D",
+  themeColor: "#FFFFFF",
 };
 
 export default function RootLayout({
@@ -17,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={archivo.variable}>
       <body className="antialiased bg-brand-light text-brand-dark font-sans">{children}</body>
     </html>
   );

@@ -8,23 +8,32 @@ export default async function Home() {
   const stores = await getStores();
 
   return (
-    <main className="min-h-screen pt-40 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-      <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[0.95]">
-        PRECISOU? <br />
-        <span className="text-brand-primary">CHEGA HOJE.</span>
-      </h1>
-      <p className="text-lg md:text-xl text-brand-muted mb-14 max-w-2xl font-medium">{PLATFORM.tagline}</p>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16">
+      <h1 className="headline font-bold text-5xl sm:text-7xl leading-[1]">Precisou? Chega hoje.</h1>
+      <p className="mt-5 text-lg sm:text-xl text-brand-muted max-w-xl leading-relaxed">{PLATFORM.tagline}</p>
 
-      <h2 className="text-2xl font-black tracking-tight mb-6">Lojas em {PLATFORM.city}</h2>
-      {stores.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {stores.map((s) => (
-            <StoreCard key={s.id} store={s} />
-          ))}
+      <section aria-labelledby="lojas" className="mt-14 sm:mt-20">
+        <div className="flex items-baseline justify-between gap-4 mb-5">
+          <h2 id="lojas" className="headline font-bold text-2xl sm:text-3xl">Lojas em {PLATFORM.city}</h2>
+          {stores.length > 0 && (
+            <p className="text-sm text-brand-muted tabular-nums">
+              {stores.length} {stores.length === 1 ? "loja" : "lojas"}
+            </p>
+          )}
         </div>
-      ) : (
-        <p className="text-brand-muted">Nenhuma loja publicada ainda.</p>
-      )}
+        {stores.length > 0 ? (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stores.map((s, i) => (
+              <li key={s.id}>
+                {/* A primeira fileira aparece sem rolar: carrega já. */}
+                <StoreCard store={s} eager={i < 3} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-brand-muted">Nenhuma loja publicada ainda.</p>
+        )}
+      </section>
     </main>
   );
 }

@@ -24,7 +24,7 @@ export default function DeliveryToggle({ slug, open }: { slug: string; open: boo
       }`}
     >
       <span>
-        <span className="block text-lg font-black">{optimistic ? "Entregando hoje" : "Entregas pausadas"}</span>
+        <span className="block text-lg font-semibold">{optimistic ? "Entregando hoje" : "Entregas pausadas"}</span>
         <span className="block text-sm opacity-80">Toque para {optimistic ? "pausar" : "voltar a entregar"}.</span>
       </span>
       <span className={`w-14 h-8 rounded-full p-1 transition-colors shrink-0 ${optimistic ? "bg-white/30" : "bg-gray-400"}`}>

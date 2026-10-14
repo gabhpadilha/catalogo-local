@@ -53,7 +53,7 @@ export default function VariantsEditor({ initial }: { initial: Variant[] }) {
               type="button"
               onClick={() => update(i, { inStock: !v.inStock })}
               aria-pressed={!v.inStock}
-              className={`h-11 px-4 rounded-xl text-xs font-black uppercase tracking-wide shrink-0 transition-colors ${
+              className={`h-11 px-4 rounded-xl text-sm font-semibold shrink-0 transition-colors ${
                 v.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
               }`}
             >

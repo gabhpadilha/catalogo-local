@@ -2,67 +2,70 @@ import { memo } from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { formatPrice, inStock, isOnSale } from "@/lib/format";
+import { PlusIcon } from "./icons";
 
 type ProductCardProps = {
   product: Product;
   onSelect: (product: Product) => void;
+  onQuickAdd: (product: Product) => void;
 };
 
-function ProductCard({ product, onSelect }: ProductCardProps) {
-  const { name, category, price, originalPrice, imageUrl } = product;
+function ProductCard({ product, onSelect, onQuickAdd }: ProductCardProps) {
+  const { name, price, originalPrice, imageUrl } = product;
   const onSale = isOnSale(product);
   const available = inStock(product);
   const discount = onSale ? Math.round(((originalPrice! - price) / originalPrice!) * 100) : 0;
+  const oneOption = product.variants.filter((v) => v.inStock).length === 1;
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(product)}
-      className="group flex flex-col text-left bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 focus-visible:outline-2 focus-visible:outline-brand-primary"
-    >
-      <div className="relative aspect-square w-full overflow-hidden bg-[#F8F8F8]">
-        {!available && (
-          <div className="absolute inset-0 z-10 bg-white/60 flex items-center justify-center">
-            <span className="bg-brand-dark text-brand-light text-xs font-black px-4 py-2 rounded-full uppercase tracking-wider">Esgotado</span>
-          </div>
-        )}
-        {onSale && available && (
-          <div className="absolute top-4 left-4 z-10 bg-brand-primary text-brand-light text-xs font-black px-3 py-1.5 rounded-full shadow-md">
-            -{discount}%
-          </div>
-        )}
+    <article className="group relative flex flex-col rounded-2xl bg-white p-2 ring-1 ring-transparent hover:ring-brand-line has-[.card-link:focus-visible]:ring-2 has-[.card-link:focus-visible]:ring-brand-dark">
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-brand-soft">
         <Image
           src={imageUrl}
-          alt={name}
+          alt=""
           fill
-          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw"
+          className={`object-cover ${available ? "" : "opacity-50 grayscale"}`}
         />
+        {!available ? (
+          <span className="absolute top-2 left-2 rounded-full bg-brand-dark text-brand-light text-xs font-medium px-2.5 py-1">Esgotado</span>
+        ) : onSale ? (
+          <span className="absolute top-2 left-2 rounded-full bg-brand-primary text-brand-light text-xs font-semibold px-2.5 py-1 tabular-nums">-{discount}%</span>
+        ) : null}
       </div>
 
-      <div className="p-5 flex flex-col flex-1 w-full">
-        <span className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-1">{category}</span>
-        <h3 className="text-lg font-bold text-brand-dark leading-tight mb-2 line-clamp-2 group-hover:text-brand-primary transition-colors">
-          {name}
+      <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">
+        <h3 className="text-sm sm:text-[15px] font-medium leading-snug text-brand-dark line-clamp-2">
+          {/* O botão cobre o card inteiro (::after); o "+" fica por cima dele. */}
+          <button type="button" onClick={() => onSelect(product)} className="card-link text-left focus-visible:outline-none after:absolute after:inset-0 after:rounded-2xl">
+            {name}
+          </button>
         </h3>
 
-        <div className="mt-auto pt-4 flex items-end justify-between">
-          <div>
+        <div className="mt-auto pt-2 flex items-end justify-between gap-2">
+          <p className="leading-tight">
             {onSale && (
-              <div className="text-sm text-brand-muted line-through font-medium mb-0.5">
-                {formatPrice(originalPrice!)}
-              </div>
+              <span className="block text-xs text-brand-muted line-through tabular-nums">
+                <span className="sr-only">De </span>{formatPrice(originalPrice!)}
+              </span>
             )}
-            <div className={`font-black ${onSale ? "text-2xl text-brand-primary" : "text-xl text-brand-dark"}`}>
-              {formatPrice(price)}
-            </div>
-          </div>
-          <span className="bg-gray-100 text-brand-dark px-3.5 py-2 rounded-full text-xs font-bold group-hover:bg-brand-dark group-hover:text-white transition-colors">
-            Ver +
-          </span>
+            <span className={`font-semibold tabular-nums ${onSale ? "text-brand-primary" : "text-brand-dark"}`}>
+              {onSale && <span className="sr-only">por </span>}{formatPrice(price)}
+            </span>
+          </p>
+          {available && (
+            <button
+              type="button"
+              onClick={() => onQuickAdd(product)}
+              aria-label={oneOption ? `Adicionar ${name} à sacola` : `Escolher opção de ${name}`}
+              className="relative z-10 shrink-0 grid place-items-center w-9 h-9 rounded-full bg-brand-dark text-brand-light hover:bg-brand-primary active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+            >
+              <PlusIcon className="w-[18px] h-[18px]" />
+            </button>
+          )}
         </div>
       </div>
-    </button>
+    </article>
   );
 }
 

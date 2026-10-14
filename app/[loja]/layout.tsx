@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import StoreFooter from "@/components/StoreFooter";
+import CartButton from "@/components/CartButton";
+import CartDrawer from "@/components/CartDrawer";
+import CartToast from "@/components/CartToast";
+import CheckoutModal from "@/components/CheckoutModal";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/components/CartProvider";
 import { SearchProvider } from "@/components/SearchProvider";
@@ -40,12 +45,18 @@ export default async function StoreLayout({ params, children }: Props & { childr
   } as React.CSSProperties;
 
   return (
-    <div style={style} className="min-h-screen bg-brand-light">
+    <div style={style} className="min-h-screen flex flex-col bg-brand-light text-brand-dark">
       <StoreProvider catalog={catalog}>
         <CartProvider>
           <SearchProvider>
             <Navbar />
-            {children}
+            <div className="flex-1">{children}</div>
+            <StoreFooter store={catalog.store} />
+            {/* Sacola e checkout em todas as páginas da loja (o cabeçalho abre a sacola de qualquer uma). */}
+            <CartButton />
+            <CartToast />
+            <CartDrawer />
+            <CheckoutModal />
           </SearchProvider>
         </CartProvider>
       </StoreProvider>

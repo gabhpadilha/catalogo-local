@@ -2,183 +2,146 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { whatsappUrl } from "@/lib/format";
-import SearchBar from "./SearchBar";
+import { SearchField, SearchToggle } from "./SearchBar";
 import { useStore } from "./StoreProvider";
+import { useCart } from "./CartProvider";
+import StoreMark from "./StoreMark";
+import DeliveryStatus from "./DeliveryStatus";
+import Sheet, { SheetIconButton } from "./Sheet";
+import { BagIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, InstagramIcon, MenuIcon, WhatsAppIcon } from "./icons";
 
-const Icons = {
-  ajuda: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-  ),
-  instagram: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-  ),
-  entrega: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="15" height="13" x="1" y="3" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-  ),
-  loja: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
-  ),
-  whatsapp: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-  )
-};
+const menuRow =
+  "flex items-center justify-between gap-3 min-h-13 px-3 rounded-xl font-medium hover:bg-brand-soft aria-[current=page]:bg-brand-soft transition-colors";
+const iconButton = "relative grid place-items-center w-10 h-10 rounded-full text-brand-dark hover:bg-brand-soft transition-colors";
 
-// Links internos usam <Link>; externos usam <a> com rel seguro.
-const SmartLink = ({ href, className, onClick, children }: { href: string; className: string; onClick?: () => void; children: React.ReactNode }) =>
-  href.startsWith("http") ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>{children}</a>
-  ) : (
-    <Link href={href} className={className} onClick={onClick}>{children}</Link>
-  );
-
-const buildLinks = (slug: string, instagram?: string) => [
-  { text: "Como Funciona", icon: Icons.ajuda, href: "/como-funciona" },
-  { text: "Entregas", icon: Icons.entrega, href: `/${slug}/entregas` },
-  ...(instagram ? [{ text: "Instagram", icon: Icons.instagram, href: instagram }] : []),
-  { text: "Outras Lojas", icon: Icons.loja, href: "/" },
-];
-
-const NavLink = ({ text, icon, href }: { text: string; icon: React.ReactNode; href: string }) => (
-  <li>
-    <SmartLink href={href} className="relative flex items-center gap-1.5 group font-medium text-sm px-1">
-      <span className="text-brand-muted group-hover:text-brand-light transition-colors duration-300">{icon}</span>
-      <div className="relative overflow-hidden h-5 leading-5">
-        <div className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] group-hover:-translate-y-1/2">
-          <span className="block text-brand-light">{text}</span>
-          <span className="block text-brand-light" aria-hidden="true">{text}</span>
-        </div>
-      </div>
-    </SmartLink>
-  </li>
-);
-
-const MobileLink = ({ text, icon, href, onClick }: { text: string; icon: React.ReactNode; href: string; onClick: () => void }) => (
-  <li>
-    <SmartLink
-      href={href}
-      onClick={onClick}
-      className="flex items-center gap-4 px-6 py-4 text-brand-light font-medium border-b border-[#2A2A2A] hover:bg-[#2A2A2A] active:bg-brand-primary transition-colors"
-    >
-      <span className="text-brand-muted [&>svg]:w-5 [&>svg]:h-5">{icon}</span>
-      {text}
-    </SmartLink>
-  </li>
-);
-
-const StatusBadge = ({ isOpen }: { isOpen: boolean }) => (
-  <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 whitespace-nowrap bg-[#1A1A1A] rounded-full border border-[#2A2A2A] pointer-events-none">
-    <span className="relative flex h-2 w-2">
-      {isOpen && (
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+function CartIconButton() {
+  const { count, setOpen } = useCart();
+  return (
+    <button type="button" onClick={() => setOpen(true)} aria-label={count ? `Abrir sacola, ${count} ${count === 1 ? "item" : "itens"}` : "Abrir sacola"} className={iconButton}>
+      <BagIcon />
+      {count > 0 && (
+        <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-brand-primary text-brand-light text-[11px] font-semibold tabular-nums">
+          {count}
+        </span>
       )}
-      <span className={`relative inline-flex rounded-full h-2 w-2 ${isOpen ? 'bg-green-500' : 'bg-[#555555]'}`}></span>
-    </span>
-    <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider ${isOpen ? 'text-brand-light' : 'text-brand-muted'}`}>
-      {isOpen ? "Entregando Hoje" : "Entregas Pausadas"}
-    </span>
-  </div>
-);
+    </button>
+  );
+}
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const pathname = usePathname();
   const { store } = useStore();
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
   const home = `/${store.slug}`;
-  const isHome = pathname === home;
-  const links = buildLinks(store.slug, store.instagram);
-  const closeMenu = () => setIsMenuOpen(false);
+  const links = [
+    { text: "Catálogo", href: home },
+    { text: "Entregas", href: `${home}/entregas` },
+  ];
+  const placeholder = `Buscar na ${store.name}`;
+  const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
-      
-      <nav className="relative bg-brand-dark text-brand-light rounded-full p-2 flex items-center justify-between shadow-2xl border border-[#2A2A2A] z-20">
-        
-        <div className="flex items-center gap-1 shrink-0">
-          {/* BOTÃO DINÂMICO DE VOLTAR */}
-          <Link
-            href={home}
-            aria-label={`${store.name} — catálogo`}
-            className={`bg-brand-light text-brand-dark rounded-full flex items-center justify-center cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 ${
-              isHome ? "w-10 h-10 overflow-hidden" : "h-10 px-4 gap-1.5"
-            }`}
-          >
-            {isHome ? (
-              store.logoUrl ? (
-                <Image src={store.logoUrl} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <span className="font-black text-xl tracking-tighter">{store.name.charAt(0)}</span>
-              )
-            ) : (
-              <>
-                {/* Ícone de Seta para Esquerda */}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                </svg>
-                <span className="font-black text-sm tracking-tight">Catálogo</span>
-              </>
-            )}
+    <>
+      {/* Faixa da plataforma: mostra onde a loja está e leva às outras. Some ao rolar. */}
+      <div className="bg-brand-dark text-brand-light text-[13px]">
+        <div className="max-w-6xl mx-auto h-9 px-4 sm:px-6 flex items-center justify-between gap-4">
+          <Link href="/" className="inline-flex items-center gap-1 -ml-1 pr-1 rounded-sm opacity-85 hover:opacity-100 hover:underline underline-offset-4">
+            <ChevronLeftIcon className="w-4 h-4" />
+            <span>
+              Todas as lojas<span className="hidden sm:inline"> de {store.city}</span>
+            </span>
+          </Link>
+          <DeliveryStatus open={store.deliveryOpen} />
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-brand-line">
+        <div className="relative max-w-6xl mx-auto h-16 px-4 sm:px-6 flex items-center gap-2 md:gap-6">
+          <Link href={home} className="flex items-center gap-2.5 min-w-0 mr-auto md:mr-0 md:w-56 shrink-0 rounded-lg">
+            <StoreMark store={store} size={34} />
+            <span className="headline font-bold text-lg truncate">{store.name}</span>
           </Link>
 
-          {/* No mobile fora da home o botão "Catálogo" ocupa o espaço da lupa */}
-          <div className={isHome ? "contents" : "hidden md:contents"}>
-            <SearchBar home={home} onOpen={closeMenu} />
+          <div className="hidden md:block flex-1 max-w-md">
+            <SearchField home={home} placeholder={placeholder} />
           </div>
-        </div>
 
-        <ul className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8 px-4 whitespace-nowrap">
-          {links.map((l) => <NavLink key={l.href} {...l} />)}
-        </ul>
-
-        <div className="md:hidden flex-1 min-w-0 flex justify-center px-1">
-          <StatusBadge isOpen={store.deliveryOpen} />
-        </div>
-
-        <div className="hidden md:block shrink-0">
-          <StatusBadge isOpen={store.deliveryOpen} />
-        </div>
-
-        <div className="md:hidden flex items-center gap-1 sm:gap-2 shrink-0">
-          <a 
-            href={whatsappUrl(store.whatsapp, `Olá! Preciso de ajuda na ${store.name}.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-brand-light text-brand-dark px-3 py-2 rounded-full text-[11px] sm:text-xs font-bold transition-transform active:scale-95"
-          >
-            {Icons.whatsapp}
-            <span className="hidden sm:inline">Suporte</span>
-          </a>
-
-          <button 
-            onClick={() => setIsMenuOpen((v) => !v)}
-            aria-expanded={isMenuOpen}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#2A2A2A] transition-colors"
-            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
-          >
-            {isMenuOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
+          <nav aria-label="Loja" className="hidden md:flex items-center gap-1 ml-auto">
+            {links.map((l) => {
+              const active = pathname === l.href;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`px-3 h-10 inline-flex items-center rounded-full text-sm font-medium transition-colors ${
+                    active ? "text-brand-dark bg-brand-soft" : "text-brand-muted hover:text-brand-dark"
+                  }`}
+                >
+                  {l.text}
+                </Link>
+              );
+            })}
+            {store.instagram && (
+              <a href={store.instagram} target="_blank" rel="noopener noreferrer" aria-label={`Instagram da ${store.name}`} className={iconButton}>
+                <InstagramIcon />
+              </a>
             )}
+          </nav>
+
+          <div className="md:hidden">
+            <SearchToggle home={home} placeholder={placeholder} />
+          </div>
+          <CartIconButton />
+          <button type="button" onClick={() => setMenuOpen(true)} aria-label="Abrir menu" aria-expanded={menuOpen} className={`${iconButton} md:hidden -mr-2`}>
+            <MenuIcon />
           </button>
         </div>
-        
-      </nav>
+      </header>
 
-      {isMenuOpen && (
-        <div className="absolute top-16 left-4 right-4 bg-brand-dark border border-[#2A2A2A] rounded-3xl shadow-2xl overflow-hidden md:hidden z-10">
-          <ul className="flex flex-col">
-            {links.map((l) => <MobileLink key={l.href} {...l} onClick={closeMenu} />)}
-          </ul>
+      <Sheet open={menuOpen} onClose={closeMenu} labelledBy="menu-title" history={false}>
+        <div className="flex items-center justify-between gap-3 px-5 h-16 border-b border-brand-line shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <StoreMark store={store} size={30} />
+            <h2 id="menu-title" className="headline font-bold text-lg truncate">{store.name}</h2>
+          </div>
+          <SheetIconButton label="Fechar menu" onClick={closeMenu}>
+            <CloseIcon />
+          </SheetIconButton>
         </div>
-      )}
-      
-    </div>
+        <nav aria-label="Menu" className="overflow-y-auto px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <ul>
+            {links.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} onClick={closeMenu} aria-current={pathname === l.href ? "page" : undefined} className={menuRow}>
+                  {l.text}
+                  <ChevronRightIcon className="w-4 h-4 text-brand-muted" />
+                </Link>
+              </li>
+            ))}
+            {store.instagram && (
+              <li>
+                <a href={store.instagram} target="_blank" rel="noopener noreferrer" className={menuRow}>
+                  <span className="inline-flex items-center gap-3"><InstagramIcon className="w-5 h-5 text-brand-muted" />Instagram</span>
+                </a>
+              </li>
+            )}
+            <li>
+              <a href={whatsappUrl(store.whatsapp, `Olá! Preciso de ajuda na ${store.name}.`)} target="_blank" rel="noopener noreferrer" className={menuRow}>
+                <span className="inline-flex items-center gap-3"><WhatsAppIcon className="w-5 h-5 text-brand-muted" />Falar com a loja no WhatsApp</span>
+              </a>
+            </li>
+            <li className="border-t border-brand-line mt-2 pt-2">
+              <Link href="/" onClick={closeMenu} className={`${menuRow} text-brand-muted`}>
+                Todas as lojas de {store.city}
+                <ChevronRightIcon className="w-4 h-4" />
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </Sheet>
+    </>
   );
 }

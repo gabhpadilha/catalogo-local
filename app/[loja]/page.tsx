@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import Hero from "@/components/Hero";
 import Catalog from "@/components/Catalog";
-import CartButton from "@/components/CartButton";
-import CartDrawer from "@/components/CartDrawer";
-import CheckoutModal from "@/components/CheckoutModal";
 import { getCatalog } from "@/lib/data";
 
 export default async function StorePage({ params }: { params: Promise<{ loja: string }> }) {
@@ -11,12 +8,9 @@ export default async function StorePage({ params }: { params: Promise<{ loja: st
   if (!catalog) notFound();
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
-      <Hero store={catalog.store} />
+    <main>
+      <Hero {...catalog} />
       <Catalog />
-      <CartButton />
-      <CartDrawer />
-      <CheckoutModal />
     </main>
   );
 }

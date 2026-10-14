@@ -37,7 +37,7 @@ export default function StoreForm({ store, zones }: Props) {
   return (
     <form action={action} className="space-y-4">
       <section className={`${card} space-y-5`}>
-        <h2 className="text-xl font-black">Identidade</h2>
+        <h2 className="headline text-xl font-bold">Identidade</h2>
         <ImageUpload name="logo_url" storeId={store.id} defaultUrl={store.logo_url} label="Logo" hint="Quadrado, de preferência com fundo." round />
         <div>
           <label htmlFor="s-name" className={label}>Nome da loja</label>
@@ -54,7 +54,7 @@ export default function StoreForm({ store, zones }: Props) {
       </section>
 
       <section className={`${card} space-y-5`}>
-        <h2 className="text-xl font-black">Cores</h2>
+        <h2 className="headline text-xl font-bold">Cores</h2>
         <div className="grid grid-cols-3 gap-3">
           {COLORS.map((c) => (
             <label key={c.key} className="block text-center">
@@ -73,14 +73,14 @@ export default function StoreForm({ store, zones }: Props) {
 
         {/* Prévia ao vivo */}
         <div className="rounded-[2rem] p-5 space-y-3" style={{ background: colors.light }} aria-label="Prévia das cores">
-          <div className="rounded-full px-4 py-2 text-sm font-black" style={{ background: colors.dark, color: colors.light }}>
+          <div className="rounded-full px-4 py-2 text-sm font-semibold" style={{ background: colors.dark, color: colors.light }}>
             {store.name}
           </div>
-          <p className="text-2xl font-black leading-tight" style={{ color: colors.dark }}>
+          <p className="headline text-2xl font-bold leading-tight" style={{ color: colors.dark }}>
             Título da vitrine <span style={{ color: colors.primary }}>em destaque</span>
           </p>
           <div className="rounded-full py-3 text-center font-bold" style={{ background: colors.primary, color: colors.light }}>
-            Adicionar à Sacola
+            Adicionar à sacola
           </div>
         </div>
         {warnings.map((w) => (
@@ -89,7 +89,7 @@ export default function StoreForm({ store, zones }: Props) {
       </section>
 
       <section className={`${card} space-y-5`}>
-        <h2 className="text-xl font-black">Topo da vitrine</h2>
+        <h2 className="headline text-xl font-bold">Topo da vitrine</h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="s-ht" className={label}>Título</label>
@@ -114,7 +114,7 @@ export default function StoreForm({ store, zones }: Props) {
       </section>
 
       <section className={`${card} space-y-5`}>
-        <h2 className="text-xl font-black">Contato</h2>
+        <h2 className="headline text-xl font-bold">Contato</h2>
         <div>
           <label htmlFor="s-wa" className={label}>WhatsApp que recebe os pedidos</label>
           <input id="s-wa" name="whatsapp" required inputMode="tel" defaultValue={formatPhone(store.whatsapp)} placeholder="41 99999-9999" className={input} />
