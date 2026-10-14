@@ -5,7 +5,7 @@
 with loja as (
   insert into stores (slug, name, segment, tagline, whatsapp, instagram, theme, hero, is_active)
   values (
-    'gribb', 'Gribb', 'Streetwear', 'Streetwear com entrega no mesmo dia.', '5541999999999',
+    'gribb', 'Gribb', 'Streetwear', 'Streetwear com entrega no mesmo dia.', '5500000000000',
     'https://instagram.com/gribb.pt',
     '{"primary":"#73030D","dark":"#0D0D0D","light":"#F2F2F2"}',
     '{"title":"ESTILO EM","highlight":"CADA PASSO.","text":"Descubra coleções exclusivas com conforto e atitude. Entrega no mesmo dia na sua porta em Guaratuba.","imageUrl":"/tenis.png"}',

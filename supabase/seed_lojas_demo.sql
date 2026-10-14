@@ -1,7 +1,7 @@
 -- Lojas fictícias de demonstração (fotos em public/demo, créditos em /creditos).
 with loja as (
   insert into public.stores (slug, name, segment, tagline, whatsapp, city, address, delivery_open, theme, hero, is_active)
-  values ('ferragem-baia', 'Ferragem Baía', 'Materiais de Construção', 'Ferramentas e material de obra com entrega no mesmo dia.', '5541999999999', 'Guaratuba', 'Rua Vieira dos Santos, 410 - Centro', true, '{"primary": "#C2410C", "dark": "#1C1917", "light": "#F5F5F4"}'::jsonb, '{"title": "FALTOU NA OBRA?", "highlight": "CHEGA HOJE.", "text": "Ferramentas, tintas e material elétrico na sua porta em Guaratuba, sem parar o serviço."}'::jsonb, true)
+  values ('ferragem-baia', 'Ferragem Baía', 'Materiais de Construção', 'Ferramentas e material de obra com entrega no mesmo dia.', '5500000000000', 'Guaratuba', 'Rua Vieira dos Santos, 410 - Centro', true, '{"primary": "#C2410C", "dark": "#1C1917", "light": "#F5F5F4"}'::jsonb, '{"title": "FALTOU NA OBRA?", "highlight": "CHEGA HOJE.", "text": "Ferramentas, tintas e material elétrico na sua porta em Guaratuba, sem parar o serviço."}'::jsonb, true)
   returning id
 ), zonas as (
   insert into public.delivery_zones (store_id, label, fee, is_pickup, sort_order)
@@ -43,7 +43,7 @@ select produtos.id, v.label, null, v.ord from produtos join (values
 
 with loja as (
   insert into public.stores (slug, name, segment, tagline, whatsapp, city, address, delivery_open, theme, hero, is_active)
-  values ('emporio-da-praia', 'Empório da Praia', 'Mercearia e Hortifruti', 'Feira, mercearia e bebidas geladas até a sua casa de praia.', '5541999999999', 'Guaratuba', 'Av. Atlântica, 1200 - Brejatuba', true, '{"primary": "#15803D", "dark": "#14231A", "light": "#F3F6F2"}'::jsonb, '{"title": "FEIRA FRESCA", "highlight": "NA SUA PORTA.", "text": "Frutas, pães e bebidas geladas para o seu dia de praia, entregues em minutos."}'::jsonb, true)
+  values ('emporio-da-praia', 'Empório da Praia', 'Mercearia e Hortifruti', 'Feira, mercearia e bebidas geladas até a sua casa de praia.', '5500000000000', 'Guaratuba', 'Av. Atlântica, 1200 - Brejatuba', true, '{"primary": "#15803D", "dark": "#14231A", "light": "#F3F6F2"}'::jsonb, '{"title": "FEIRA FRESCA", "highlight": "NA SUA PORTA.", "text": "Frutas, pães e bebidas geladas para o seu dia de praia, entregues em minutos."}'::jsonb, true)
   returning id
 ), zonas as (
   insert into public.delivery_zones (store_id, label, fee, is_pickup, sort_order)
@@ -83,7 +83,7 @@ select produtos.id, v.label, null, v.ord from produtos join (values
 
 with loja as (
   insert into public.stores (slug, name, segment, tagline, whatsapp, city, address, delivery_open, theme, hero, is_active)
-  values ('surf-e-sol', 'Surf & Sol', 'Moda Praia e Surf', 'Tudo para o mar: pranchas, moda praia e acessórios.', '5541999999999', 'Guaratuba', 'Rua Paraguai, 88 - Prainha', true, '{"primary": "#0369A1", "dark": "#0B1B26", "light": "#F1F5F8"}'::jsonb, '{"title": "O MAR CHAMOU,", "highlight": "A GENTE ENTREGA.", "text": "Moda praia, pranchas e protetor solar no mesmo dia em Guaratuba."}'::jsonb, true)
+  values ('surf-e-sol', 'Surf & Sol', 'Moda Praia e Surf', 'Tudo para o mar: pranchas, moda praia e acessórios.', '5500000000000', 'Guaratuba', 'Rua Paraguai, 88 - Prainha', true, '{"primary": "#0369A1", "dark": "#0B1B26", "light": "#F1F5F8"}'::jsonb, '{"title": "O MAR CHAMOU,", "highlight": "A GENTE ENTREGA.", "text": "Moda praia, pranchas e protetor solar no mesmo dia em Guaratuba."}'::jsonb, true)
   returning id
 ), zonas as (
   insert into public.delivery_zones (store_id, label, fee, is_pickup, sort_order)
@@ -126,7 +126,7 @@ select produtos.id, v.label, null, v.ord from produtos join (values
 
 with loja as (
   insert into public.stores (slug, name, segment, tagline, whatsapp, city, address, delivery_open, theme, hero, is_active)
-  values ('pet-mare', 'Pet Maré', 'Pet Shop', 'Ração, petiscos e acessórios para o seu pet.', '5541999999999', 'Guaratuba', 'Rua Antônio Mota, 230 - Cohapar', false, '{"primary": "#7C3AED", "dark": "#1E1530", "light": "#F5F3F8"}'::jsonb, '{"title": "PET FELIZ,", "highlight": "TUTOR TRANQUILO.", "text": "Ração, areia e brinquedos entregues hoje, sem você sair de casa."}'::jsonb, true)
+  values ('pet-mare', 'Pet Maré', 'Pet Shop', 'Ração, petiscos e acessórios para o seu pet.', '5500000000000', 'Guaratuba', 'Rua Antônio Mota, 230 - Cohapar', false, '{"primary": "#7C3AED", "dark": "#1E1530", "light": "#F5F3F8"}'::jsonb, '{"title": "PET FELIZ,", "highlight": "TUTOR TRANQUILO.", "text": "Ração, areia e brinquedos entregues hoje, sem você sair de casa."}'::jsonb, true)
   returning id
 ), zonas as (
   insert into public.delivery_zones (store_id, label, fee, is_pickup, sort_order)
@@ -167,7 +167,7 @@ select produtos.id, v.label, null, v.ord from produtos join (values
 
 with loja as (
   insert into public.stores (slug, name, segment, tagline, whatsapp, city, address, delivery_open, theme, hero, is_active)
-  values ('casa-litoral', 'Casa Litoral', 'Casa e Decoração', 'Utilidades e decoração para deixar a casa de praia pronta.', '5541999999999', 'Guaratuba', 'Rua Dr. Xavier da Silva, 515 - Centro', true, '{"primary": "#9A3412", "dark": "#231A15", "light": "#F7F4F1"}'::jsonb, '{"title": "CASA DE PRAIA", "highlight": "PRONTA HOJE.", "text": "Utilidades, cama, mesa e decoração para receber a família no fim de semana."}'::jsonb, true)
+  values ('casa-litoral', 'Casa Litoral', 'Casa e Decoração', 'Utilidades e decoração para deixar a casa de praia pronta.', '5500000000000', 'Guaratuba', 'Rua Dr. Xavier da Silva, 515 - Centro', true, '{"primary": "#9A3412", "dark": "#231A15", "light": "#F7F4F1"}'::jsonb, '{"title": "CASA DE PRAIA", "highlight": "PRONTA HOJE.", "text": "Utilidades, cama, mesa e decoração para receber a família no fim de semana."}'::jsonb, true)
   returning id
 ), zonas as (
   insert into public.delivery_zones (store_id, label, fee, is_pickup, sort_order)
