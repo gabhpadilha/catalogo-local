@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PLATFORM } from "@/lib/platform";
+import { whatsappUrl } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Sobre",
@@ -42,10 +44,19 @@ export default function SobrePage() {
           <li>Frete calculado na hora pelo Uber ou pela sua tabela de bairros.</li>
           <li>Seus produtos também aparecem na busca de todas as lojas da cidade.</li>
         </ul>
-        <p className="mt-5 text-brand-muted">Quer vender aqui? Fale com a equipe da Vitrine Guaratuba.</p>
-        <Link href="/admin" className="mt-5 inline-flex items-center h-11 px-5 rounded-full bg-brand-dark text-brand-light font-semibold text-sm hover:bg-brand-primary transition-colors">
-          Já sou lojista: entrar no painel
-        </Link>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <a
+            href={whatsappUrl(PLATFORM.salesWhatsapp, `Olá! Tenho uma loja em ${PLATFORM.city} e quero vender na ${PLATFORM.name}.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-brand-primary text-brand-light font-semibold text-sm hover:bg-brand-dark transition-colors"
+          >
+            Quero vender aqui
+          </a>
+          <Link href="/admin" className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white ring-1 ring-brand-line font-semibold text-sm hover:ring-brand-dark/30">
+            Já sou lojista: entrar no painel
+          </Link>
+        </div>
       </section>
     </main>
   );

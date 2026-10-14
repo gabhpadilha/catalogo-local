@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PLATFORM } from "@/lib/platform";
+import { whatsappUrl } from "@/lib/format";
 
 const LINKS = [
   { text: "Lojas", href: "/#lojas" },
@@ -16,9 +17,9 @@ export default function PlatformFooter() {
         <div>
           <p className="headline font-bold text-lg">{PLATFORM.name}</p>
           <p className="mt-2 text-sm text-brand-muted max-w-xs">Tem uma loja em {PLATFORM.city}? Venda aqui com vitrine própria e entrega no mesmo dia.</p>
-          <Link href="/sobre#lojistas" className="mt-3 inline-flex items-center h-10 px-4 rounded-full bg-brand-dark text-brand-light text-sm font-semibold hover:bg-brand-primary transition-colors">
+          <a href={whatsappUrl(PLATFORM.salesWhatsapp, `Olá! Tenho uma loja em ${PLATFORM.city} e quero vender na ${PLATFORM.name}.`)} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center h-10 px-4 rounded-full bg-brand-dark text-brand-light text-sm font-semibold hover:bg-brand-primary transition-colors">
             Quero vender aqui
-          </Link>
+          </a>
         </div>
         <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium">
           {LINKS.map((l) => (
