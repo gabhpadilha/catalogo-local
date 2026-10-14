@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCart } from "./CartProvider";
 import { useStore } from "./StoreProvider";
 import Sheet, { SheetIconButton } from "./Sheet";
@@ -9,7 +9,9 @@ import { formatPrice, whatsappUrl } from "@/lib/format";
 import { PLATFORM } from "@/lib/platform";
 import { logStoreEvent } from "@/lib/events";
 import type { CartItem, DeliveryZone } from "@/lib/types";
-import UberDelivery, { addressLine, emptyAddress, type Coords, type DropoffAddress, type QuoteState } from "./UberDelivery";
+import UberDelivery, { type QuoteState } from "./UberDelivery";
+import AddressFields, { addressLine, emptyAddress, useStreetCheck, type Coords, type DropoffAddress, type StreetCheck } from "./AddressFields";
+import { sameNeighborhood } from "@/lib/neighborhoods";
 
 const CUSTOMER_KEY = "gribb-customer";
 const NAME_MAX = 60;
@@ -27,7 +29,8 @@ const loadCustomer = (zones: DeliveryZone[]): Customer => {
   try {
     saved = JSON.parse(localStorage.getItem(CUSTOMER_KEY) ?? "{}") ?? {};
   } catch {}
-  const deliveryId = zones.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : zones[0]?.id ?? "";
+  // Escolha salva desta loja, ou vazio (quem chama decide o padrão).
+  const deliveryId = zones.some((o) => o.id === saved.deliveryId) ? (saved.deliveryId as string) : "";
   const d = (saved.drop ?? {}) as Partial<Record<keyof DropoffAddress, unknown>>;
   const drop = { cep: str(d.cep, 9), street: str(d.street, 120), number: str(d.number, 20), complement: str(d.complement, 60), neighborhood: str(d.neighborhood, 60) };
   return { name: str(saved.name, NAME_MAX), deliveryId, address: str(saved.address, ADDRESS_MAX), drop };
@@ -36,18 +39,39 @@ const loadCustomer = (zones: DeliveryZone[]): Customer => {
 // Uma linha só, sem espaços repetidos.
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
+// O que o mapa diz sobre o endereço: bairro pelo GPS, bairros por onde a rua passa, ou nada.
+type Evidence = { method: "gps" | "street"; neighborhoods: string[] } | { method: "notfound" | "pending" };
+
+const evidenceOf = (gpsNeighborhood: string | null, check: StreetCheck): Evidence =>
+  gpsNeighborhood
+    ? { method: "gps", neighborhoods: [gpsNeighborhood] }
+    : check.status === "found" && check.neighborhoods.length
+      ? { method: "street", neighborhoods: check.neighborhoods }
+      : { method: check.status === "notfound" ? "notfound" : "pending" };
+
+// Selo para o lojista conferir antes de mandar o Pix.
+const checkLine = (ev: Evidence, chosen?: string, outside: string[] = []) => {
+  if (!("neighborhoods" in ev)) {
+    return ev.method === "notfound" ? "⚠ Rua não encontrada no mapa: confira o endereço antes de cobrar o frete" : "⚠ Endereço não conferido no mapa";
+  }
+  const where = ev.neighborhoods.join(", ");
+  if (chosen && !ev.neighborhoods.some((n) => sameNeighborhood(n, chosen))) return `⚠ Pelo mapa, o endereço fica em ${where}: confira o bairro (${chosen})`;
+  if (ev.method === "street" && outside.length) return `⚠ A rua passa por ${where}; confira se é mesmo ${chosen} (${outside.join(", ")} fora da tabela)`;
+  return ev.method === "gps" ? `✔ Bairro confirmado pelo GPS (${where})` : `✔ Rua encontrada no mapa (${where})`;
+};
+
 // Como o pedido vai ser entregue, para montar a mensagem.
 type Shipping =
   | { kind: "pickup" }
-  | { kind: "zone"; label: string; fee: number; address: string }
-  | { kind: "uber"; fee: number | null; address: string; cep: string; mapUrl: string };
+  | { kind: "zone"; label: string; fee: number; address: string; mapUrl: string; check: string }
+  | { kind: "uber"; fee: number | null; address: string; cep: string; mapUrl: string; check: string };
 
 const shippingLines = (s: Shipping, subtotal: number, city: string) => {
   if (s.kind === "pickup") return { fee: ["Entrega: Retirada na loja (grátis)", `*Total: ${formatPrice(subtotal)}*`], where: ["Retirada na loja"] };
   if (s.kind === "zone") {
     return {
       fee: [`Frete Uber Flash (${s.label}): ~${formatPrice(s.fee)} — a confirmar`, `*Total estimado: ${formatPrice(subtotal + s.fee)}*`],
-      where: [`Endereço: ${clean(s.address)} — ${s.label}, ${city}`],
+      where: [`Endereço: ${clean(s.address)} — ${s.label}, ${city}`, `Mapa: ${s.mapUrl}`, s.check],
     };
   }
   return {
@@ -55,7 +79,7 @@ const shippingLines = (s: Shipping, subtotal: number, city: string) => {
       s.fee == null
         ? ["Frete: a combinar (o site não conseguiu cotar)", `*Total sem frete: ${formatPrice(subtotal)}*`]
         : [`Frete Uber (cotado no site): ${formatPrice(s.fee)}`, `*Total: ${formatPrice(subtotal + s.fee)}*`],
-    where: [`Endereço: ${clean(s.address)}, ${city} - CEP ${s.cep}`, `Mapa: ${s.mapUrl}`],
+    where: [`Endereço: ${clean(s.address)}, ${city} - CEP ${s.cep}`, `Mapa: ${s.mapUrl}`, s.check],
   };
 };
 
@@ -92,10 +116,17 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const deliveryZones = zones.filter((z) => !z.pickup);
   const [customer, setCustomer] = useState(() => {
     const c = loadCustomer(zones);
-    // Loja com Uber: entrega por padrão, a menos que o cliente tenha escolhido retirada da última vez.
-    return uber && c.deliveryId !== pickupZone?.id ? { ...c, deliveryId: UBER } : c;
+    // Padrão é entrega (não retirada, mesmo que ela seja a primeira zona); retirada só se o cliente escolheu antes.
+    if (c.deliveryId === pickupZone?.id) return c;
+    if (uber) return { ...c, deliveryId: UBER };
+    return { ...c, deliveryId: c.deliveryId || ((zones.find((z) => !z.pickup) ?? zones[0])?.id ?? "") };
   });
   const [coords, setCoords] = useState<Coords | null>(null);
+  const [gpsNeighborhood, setGpsNeighborhood] = useState<string | null>(null);
+  const onGps = useCallback((g: { coords: Coords; neighborhood: string } | null) => {
+    setCoords(g?.coords ?? null);
+    setGpsNeighborhood(g?.neighborhood || null);
+  }, []);
   const [quote, setQuote] = useState<QuoteState>({ status: "idle" });
   const setDrop = useCallback((drop: DropoffAddress) => setCustomer((c) => ({ ...c, drop })), []);
   // Bairro lembrado ao alternar entre entrega e retirada.
@@ -111,6 +142,26 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
   const drop = customer.drop ?? emptyAddress;
   // Com Uber, só envia depois que a cotação respondeu (com valor ou com erro, aí o frete fica a combinar).
   const waitingQuote = uber && !pickup && (quote.status === "idle" || quote.status === "loading");
+  // Bairro decidido pelo endereço, não pela escolha livre: só entram as zonas que batem com o mapa.
+  const streetCheck = useStreetCheck(pickup ? "" : drop.street);
+  const evidence = evidenceOf(coords ? gpsNeighborhood : null, streetCheck);
+  const matching = "neighborhoods" in evidence ? deliveryZones.filter((z) => evidence.neighborhoods.some((n) => sameNeighborhood(z.label, n))) : [];
+  // Bairros do mapa que a loja não atende (ex.: a rua também passa pela Prainha, que não está na tabela).
+  const outside = "neighborhoods" in evidence ? evidence.neighborhoods.filter((n) => !deliveryZones.some((z) => sameNeighborhood(z.label, n))) : [];
+  const zoneOptions = matching.length ? matching : deliveryZones;
+  const zoneLocked = matching.length === 1 && outside.length === 0;
+  const matchKey = matching.map((z) => z.id).join(",");
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (uber || pickup || !matchKey) return;
+    const ids = matchKey.split(",");
+    if (!ids.includes(customer.deliveryId)) {
+      setLastDeliveryId(ids[0]);
+      setCustomer((c) => ({ ...c, deliveryId: ids[0] }));
+    }
+  }, [uber, pickup, matchKey, customer.deliveryId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   const update = (field: keyof Customer) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setCustomer((c) => ({ ...c, [field]: e.target.value }));
   const chooseZone = (id: string) => {
@@ -125,8 +176,15 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
     const shipping: Shipping = pickup
       ? { kind: "pickup" }
       : uber
-        ? { kind: "uber", fee: uberFee, address: addressLine(drop), cep: drop.cep, mapUrl: mapUrl(`${drop.street}, ${drop.number}${drop.neighborhood ? ` - ${drop.neighborhood}` : ""}`, store.city, coords) }
-        : { kind: "zone", label: delivery.label, fee: delivery.fee, address: customer.address };
+        ? { kind: "uber", fee: uberFee, address: addressLine(drop), cep: drop.cep, mapUrl: mapUrl(`${drop.street}, ${drop.number}${drop.neighborhood ? ` - ${drop.neighborhood}` : ""}`, store.city, coords), check: checkLine(evidence) }
+        : {
+            kind: "zone",
+            label: delivery.label,
+            fee: delivery.fee,
+            address: addressLine({ ...drop, neighborhood: "" }),
+            mapUrl: mapUrl(`${drop.street}, ${drop.number} - ${delivery.label}`, store.city, coords),
+            check: checkLine(evidence, delivery.label, outside),
+          };
     const url = whatsappUrl(store.whatsapp, buildOrderMessage(store.name, store.city, cart, customer.name, subtotal, shipping));
     window.open(url, "_blank", "noopener,noreferrer");
     logStoreEvent(store.slug, "order", subtotal + fee);
@@ -208,31 +266,58 @@ function CheckoutForm({ onClose }: { onClose: () => void }) {
             value={drop}
             onChange={setDrop}
             coords={coords}
-            onCoords={setCoords}
+            onGps={onGps}
             quote={quote}
             onQuote={setQuote}
             inputClass={inputClass}
             labelClass={labelClass}
           />
         ) : (
-          <>
-            {deliveryZones.length > 0 && (
-              <div>
-                <label htmlFor="co-delivery" className={labelClass}>Bairro</label>
-                <select id="co-delivery" value={customer.deliveryId} onChange={(e) => chooseZone(e.target.value)} className={`${inputClass} appearance-none bg-[length:16px] bg-[right_1rem_center] bg-no-repeat pr-10`} style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")" }}>
-                  {deliveryZones.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.label} (frete {formatPrice(o.fee)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div>
-              <label htmlFor="co-address" className={labelClass}>Endereço</label>
-              <input id="co-address" required autoComplete="street-address" maxLength={ADDRESS_MAX} placeholder="Rua, número e complemento" value={customer.address} onChange={update("address")} className={inputClass} />
-            </div>
-          </>
+          <AddressFields
+            value={drop}
+            onChange={setDrop}
+            coords={coords}
+            onGps={onGps}
+            showCep={false}
+            inputClass={inputClass}
+            labelClass={labelClass}
+            neighborhoodField={
+              deliveryZones.length > 0 && (
+                <div>
+                  <label htmlFor="co-delivery" className={labelClass}>Bairro</label>
+                  <select
+                    id="co-delivery"
+                    value={customer.deliveryId}
+                    disabled={zoneLocked}
+                    onChange={(e) => chooseZone(e.target.value)}
+                    className={`${inputClass} appearance-none bg-[length:16px] bg-[right_1rem_center] bg-no-repeat pr-10 disabled:bg-brand-soft disabled:opacity-100`}
+                    style={{ backgroundImage: zoneLocked ? undefined : "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")" }}
+                  >
+                    {zoneOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label} (frete {formatPrice(o.fee)})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-brand-muted">
+                    {zoneLocked
+                      ? evidence.method === "gps"
+                        ? "Bairro definido pela sua localização."
+                        : "Bairro definido pela rua informada."
+                      : matching.length > 0 && outside.length > 0
+                        ? `Essa rua também passa por ${outside.join(", ")}, fora da tabela da loja. Escolha o seu bairro; a loja confere antes do Pix.`
+                        : matching.length > 1
+                          ? "Essa rua passa por mais de um bairro: escolha o seu."
+                        : "neighborhoods" in evidence
+                          ? `Pelo mapa, esse endereço fica em ${evidence.neighborhoods.join(", ")}, fora da tabela da loja. A loja confirma o frete no WhatsApp.`
+                          : evidence.method === "notfound"
+                            ? "Não achamos essa rua no mapa. Escolha o bairro; a loja confere antes do Pix."
+                            : "Informe a rua para conferirmos o bairro."}
+                  </p>
+                </div>
+              )
+            }
+          />
         )}
 
         {PLATFORM.demo && (

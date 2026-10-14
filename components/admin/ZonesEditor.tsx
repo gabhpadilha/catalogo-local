@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ghostButton, input, label as labelClass } from "./ui";
+import { NEIGHBORHOODS } from "@/lib/neighborhoods";
 
 type Zone = { id?: string; label: string; fee: string; pickup: boolean };
 
@@ -13,11 +14,19 @@ export default function ZonesEditor({ initial }: { initial: Zone[] }) {
     <fieldset>
       <legend className={labelClass}>Bairros e frete estimado</legend>
       <input type="hidden" name="zones" value={JSON.stringify(zones)} />
-      <p className="text-sm text-brand-muted mb-3">O valor é uma estimativa mostrada ao cliente; o frete final é confirmado no WhatsApp.</p>
+      <p className="text-sm text-brand-muted mb-3">
+        O valor é uma estimativa mostrada ao cliente; o frete final é confirmado no WhatsApp. Use os nomes de bairro sugeridos: assim o site
+        confere no mapa se a rua do cliente fica mesmo no bairro escolhido.
+      </p>
+      <datalist id="bairros-mapa">
+        {NEIGHBORHOODS.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
       <ul className="space-y-2 mb-3">
         {zones.map((z, i) => (
           <li key={z.id ?? `novo-${i}`} className="flex items-center gap-2">
-            <input value={z.label} onChange={(e) => update(i, { label: e.target.value })} maxLength={60} aria-label="Bairro" placeholder="Bairro" className={`${input.replace("w-full ", "")} flex-1 min-w-0 h-11`} />
+            <input value={z.label} onChange={(e) => update(i, { label: e.target.value })} maxLength={60} aria-label="Bairro" placeholder="Bairro" list="bairros-mapa" className={`${input.replace("w-full ", "")} flex-1 min-w-0 h-11`} />
             {z.pickup ? (
               <span className="w-28 text-center text-sm font-semibold text-green-800 bg-green-100 h-11 rounded-xl flex items-center justify-center shrink-0">Retirada</span>
             ) : (
