@@ -4,7 +4,7 @@ import StoreMark from "./StoreMark";
 import DeliveryStatus from "./DeliveryStatus";
 import { ChevronRightIcon } from "./icons";
 
-// Card compacto: a marca na cor da loja já identifica; o status só aparece quando foge do normal.
+// Card compacto: marca na cor da loja, nome, segmento e se entrega hoje.
 export default function StoreCard({ store }: { store: Store }) {
   return (
     <Link
@@ -15,7 +15,7 @@ export default function StoreCard({ store }: { store: Store }) {
       <span className="flex-1 min-w-0">
         <span className="block font-semibold leading-tight truncate">{store.name}</span>
         <span className="block text-sm text-brand-muted truncate">{store.segment}</span>
-        {!store.deliveryOpen && <DeliveryStatus open={false} className="mt-1 text-xs font-medium text-brand-muted" />}
+        <DeliveryStatus open={store.deliveryOpen} className={`mt-1 text-xs font-medium ${store.deliveryOpen ? "text-emerald-700" : "text-brand-muted"}`} />
       </span>
       <ChevronRightIcon className="w-5 h-5 shrink-0 text-brand-muted group-hover:text-brand-dark" />
     </Link>

@@ -11,12 +11,14 @@ type Props = {
   title: string;
   tagline: string;
   categories: string[];
+  /** Entre o título e a busca (fileira de lojas). */
+  aboveSearch?: React.ReactNode;
   /** Conteúdo da home sem busca (lojas e faixa de ofertas), renderizado no servidor. */
   children: React.ReactNode;
 };
 
 // Busca entre todas as lojas: com texto, os resultados ocupam o lugar das lojas.
-export default function MarketSearch({ title, tagline, categories, children }: Props) {
+export default function MarketSearch({ title, tagline, categories, aboveSearch, children }: Props) {
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState<PreparedIndex | null>(null);
   const [failed, setFailed] = useState(false);
@@ -93,6 +95,7 @@ export default function MarketSearch({ title, tagline, categories, children }: P
     <div>
       <h1 className="headline font-bold text-4xl sm:text-6xl lg:text-7xl leading-[1]">{title}</h1>
       <p className="mt-3 sm:mt-5 text-base sm:text-xl text-brand-muted max-w-xl leading-relaxed">{tagline}</p>
+      {aboveSearch}
 
       <form
         ref={formRef}

@@ -3,13 +3,14 @@ import MarketSearch from "@/components/market/MarketSearch";
 import OpenCarts from "@/components/market/OpenCarts";
 import Shelf from "@/components/market/Shelf";
 import HowItWorksStrip from "@/components/market/HowItWorksStrip";
+import StoreRail from "@/components/market/StoreRail";
 import { getSearchIndex, getStores } from "@/lib/data";
 import { PLATFORM } from "@/lib/platform";
 import { homeShelves, topCategories } from "@/lib/search";
 
 export const revalidate = 60;
 
-// Ordem: busca → produtos → como funciona → lojas. A busca substitui tudo abaixo dela.
+// Ordem: fileira de lojas → busca → produtos → como funciona → lista de lojas. A busca substitui tudo abaixo dela.
 export default async function Home() {
   const [stores, index] = await Promise.all([getStores(), getSearchIndex()]);
   const shelves = homeShelves(index.items);
@@ -19,7 +20,12 @@ export default async function Home() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-14 pb-16">
       <OpenCarts stores={index.stores} />
 
-      <MarketSearch title="Precisou? Chega hoje." tagline={PLATFORM.tagline} categories={topCategories(index.items)}>
+      <MarketSearch
+        title="Precisou? Chega hoje."
+        tagline={PLATFORM.tagline}
+        categories={topCategories(index.items)}
+        aboveSearch={<StoreRail stores={stores} />}
+      >
         {shelves.map((s, i) => (
           <Shelf key={s.id} id={s.id} title={s.title} items={s.items} stores={storeBySlug} eager={i === 0} />
         ))}
