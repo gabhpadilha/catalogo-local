@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import FilterPills from "../FilterPills";
 import { CloseIcon, SearchIcon } from "../icons";
 import SearchResults from "./SearchResults";
 import { MIN_QUERY, loadSearchIndex, logSearchMiss, search, type PreparedIndex } from "@/lib/search";
@@ -92,8 +91,8 @@ export default function MarketSearch({ title, tagline, categories, children }: P
 
   return (
     <div>
-      <h1 className="headline font-bold text-5xl sm:text-7xl leading-[1]">{title}</h1>
-      <p className="mt-4 sm:mt-5 text-lg sm:text-xl text-brand-muted max-w-xl leading-relaxed">{tagline}</p>
+      <h1 className="headline font-bold text-4xl sm:text-6xl lg:text-7xl leading-[1]">{title}</h1>
+      <p className="mt-3 sm:mt-5 text-base sm:text-xl text-brand-muted max-w-xl leading-relaxed">{tagline}</p>
 
       <form
         ref={formRef}
@@ -103,7 +102,7 @@ export default function MarketSearch({ title, tagline, categories, children }: P
           inputRef.current?.blur(); // fecha o teclado no celular
           if (empty) logSearchMiss(deferred);
         }}
-        className={`mt-7 scroll-mt-16 ${active ? "sticky top-16 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-brand-light/90 backdrop-blur-md" : ""}`}
+        className={`mt-5 sm:mt-7 scroll-mt-16 ${active ? "sticky top-16 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-brand-light/90 backdrop-blur-md" : ""}`}
       >
         <label htmlFor="busca" className="sr-only">
           Buscar produtos e lojas
@@ -138,9 +137,24 @@ export default function MarketSearch({ title, tagline, categories, children }: P
       </form>
 
       {categories.length > 0 && (
-        <div className="mt-4" aria-label="Categorias">
-          <FilterPills options={categories} active={activeCategory} onChange={(c) => change(c === activeCategory ? "" : c)} />
-        </div>
+        // Atalhos de busca (não filtros): tocar faz uma busca pela categoria em todas as lojas.
+        <nav aria-label="Buscar por categoria" className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+          <span className="shrink-0 text-sm text-brand-muted mr-1">Buscar por</span>
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-pressed={c === activeCategory}
+              onClick={() => change(c === activeCategory ? "" : c)}
+              className={`shrink-0 inline-flex items-center gap-1.5 h-9 pl-3 pr-3.5 rounded-full text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark ${
+                c === activeCategory ? "bg-brand-dark text-brand-light" : "bg-brand-soft text-brand-dark hover:bg-brand-line"
+              }`}
+            >
+              <SearchIcon className="w-3.5 h-3.5 opacity-70" />
+              {c}
+            </button>
+          ))}
+        </nav>
       )}
 
       <p role="status" className="sr-only">

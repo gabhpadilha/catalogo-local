@@ -5,13 +5,13 @@ import { PriceTag, ProductImage, discountOf } from "../ProductTile";
 
 // Produto de qualquer loja na home. Abre a vitrine da loja com o produto aberto (?produto=),
 // então a sacola e o checkout continuam sendo os da loja.
-export default function ResultCard({ item, store, sizes = "(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw" }: { item: SearchItem; store: SearchStore; sizes?: string }) {
+export default function ResultCard({ item, store, sizes = "(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw", eager = false }: { item: SearchItem; store: SearchStore; sizes?: string; eager?: boolean }) {
   return (
     <Link
       href={`/${store.slug}?produto=${encodeURIComponent(item.id)}`}
       className="relative flex flex-col h-full rounded-2xl bg-white p-2 ring-1 ring-transparent hover:ring-brand-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
     >
-      <ProductImage src={item.imageUrl} sizes={sizes} discount={discountOf(item)} />
+      <ProductImage src={item.imageUrl} sizes={sizes} discount={discountOf(item)} eager={eager} />
       <div className="flex flex-1 flex-col px-1.5 pt-3 pb-1">
         <h3 className="text-sm sm:text-[15px] font-medium leading-snug text-brand-dark line-clamp-2">{item.name}</h3>
         <div className="mt-auto pt-2">

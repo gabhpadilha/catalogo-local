@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Sobre",
@@ -32,6 +33,20 @@ export default function SobrePage() {
           </div>
         ))}
       </dl>
+
+      <section id="lojistas" aria-labelledby="lojistas-titulo" className="mt-16 scroll-mt-24 rounded-3xl bg-white ring-1 ring-brand-line p-6 sm:p-8">
+        <h2 id="lojistas-titulo" className="headline font-bold text-2xl">Para lojistas</h2>
+        <ul className="mt-4 space-y-2 text-brand-muted leading-relaxed list-disc pl-5">
+          <li>Vitrine própria com as cores e o link da sua loja, para divulgar no Instagram.</li>
+          <li>Pedidos chegam prontos no seu WhatsApp; o pagamento é no Pix, direto para você.</li>
+          <li>Frete calculado na hora pelo Uber ou pela sua tabela de bairros.</li>
+          <li>Seus produtos também aparecem na busca de todas as lojas da cidade.</li>
+        </ul>
+        <p className="mt-5 text-brand-muted">Quer vender aqui? Fale com a equipe da Vitrine Guaratuba.</p>
+        <Link href="/admin" className="mt-5 inline-flex items-center h-11 px-5 rounded-full bg-brand-dark text-brand-light font-semibold text-sm hover:bg-brand-primary transition-colors">
+          Já sou lojista: entrar no painel
+        </Link>
+      </section>
     </main>
   );
 }

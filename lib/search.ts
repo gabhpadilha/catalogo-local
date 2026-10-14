@@ -159,10 +159,14 @@ export function topCategories(items: SearchItem[], limit = 6) {
 
 const discount = (it: SearchItem) => (it.originalPrice ? (it.originalPrice - it.price) / it.originalPrice : 0);
 
-/** Faixa da home: ofertas de todas as lojas ou, sem nenhuma, os produtos mais novos. */
-export function pickShelf(items: SearchItem[], city: string, limit = 12) {
-  const sales = items.filter(isOnSale).sort((a, b) => discount(b) - discount(a));
-  return sales.length ? { title: `Ofertas em ${city}`, items: sales.slice(0, limit) } : { title: "Novidades", items: items.slice(0, limit) };
+/** Faixas da home: todas as ofertas (maior desconto primeiro) e os produtos mais novos que não estão em oferta. */
+export function homeShelves(items: SearchItem[]) {
+  const sales = items.filter(isOnSale).sort((a, b) => discount(b) - discount(a)).slice(0, 48);
+  const fresh = items.filter((i) => !isOnSale(i)).slice(0, 12);
+  return [
+    { id: "ofertas", title: "Ofertas", items: sales },
+    { id: "novidades", title: "Novidades", items: fresh },
+  ].filter((s) => s.items.length > 0);
 }
 
 // ───────────── Navegador ─────────────

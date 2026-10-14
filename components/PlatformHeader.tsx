@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { PLATFORM } from "@/lib/platform";
 
 const LINKS = [
-  { text: "Lojas", href: "/" },
+  { text: "Lojas", href: "/#lojas" },
   { text: "Como funciona", href: "/como-funciona" },
   { text: "Sobre", href: "/sobre" },
 ];
@@ -24,7 +24,7 @@ export default function PlatformHeader() {
               const active = pathname === l.href;
               return (
                 // No mobile o nome da plataforma já leva às lojas.
-                <li key={l.href} className={l.href === "/" ? "hidden sm:block" : undefined}>
+                <li key={l.href} className={l.href === "/#lojas" ? "hidden sm:block" : undefined}>
                   <Link
                     href={l.href}
                     aria-current={active ? "page" : undefined}
